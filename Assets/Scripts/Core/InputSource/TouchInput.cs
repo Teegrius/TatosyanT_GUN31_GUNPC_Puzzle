@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Core.InputSource
 {
-    public sealed class TouchInput : VectorInputSource
+    public sealed class TouchInput : TouchInputSource
     {
         protected override bool GetInputDown => TryGetTouch(out var touch) && touch.phase == TouchPhase.Began;
         protected override bool GetInputHold => TryGetTouch(out var touch) && touch.phase == TouchPhase.Moved;

@@ -4,5 +4,6 @@ namespace DefaultNamespace
     {
         public static string MovePoints = nameof(MovePoints);
         public static string MovingZones = nameof(MovingZones);
+        public static string LevelPlayerPrefsKey = nameof(LevelPlayerPrefsKey);
     }
 }

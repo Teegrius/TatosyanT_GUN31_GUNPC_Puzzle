@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Core.InputSource
 {
-    public sealed class MouseInput : VectorInputSource
+    public sealed class MouseInput : TouchInputSource
     {
         protected override bool GetInputDown => Input.GetMouseButtonDown(0);
         protected override bool GetInputHold => Input.GetMouseButton(0);

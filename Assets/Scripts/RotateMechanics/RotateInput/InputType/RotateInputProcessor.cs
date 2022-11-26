@@ -5,11 +5,11 @@ using UnityEngine;
 
 namespace RotateMechanics.RotateInput.InputType
 {
-    public sealed class RotateInputProcessor : IVectorInputProcessor
+    public sealed class RotateInputProcessor : IInputProcessor
     {
-        private IVectorInputSource _inputSource;
+        private ITouchInputSource _inputSource;
 
-        public void Initialize(IVectorInputSource inputSource) => _inputSource = inputSource;
+        public void Initialize(ITouchInputSource inputSource) => _inputSource = inputSource;
 
         public void ProcessInput()
         {
