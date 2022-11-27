@@ -1,4 +1,5 @@
 using Core.MessageSystem;
+using DefaultNamespace;
 using Messages;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,6 +24,20 @@ namespace RotateMechanics
 
         private void OnDestroy() => Messenger.Unsubscribe(this);
 
-        public void OnMessage(LevelCompleted message) => SceneManager.LoadScene("Main");
+        public void OnMessage(LevelCompleted message)
+        {
+            SetPlayerPrefsValue();
+            SceneManager.LoadScene("Main");
+        }
+
+        private void SetPlayerPrefsValue()
+        {
+            if (!PlayerPrefs.HasKey(RotateConstants.LevelPlayerPrefsKey))
+            {
+                PlayerPrefs.SetInt(RotateConstants.LevelPlayerPrefsKey,1);
+            }
+            int level = PlayerPrefs.GetInt(RotateConstants.LevelPlayerPrefsKey);
+            PlayerPrefs.SetInt(RotateConstants.LevelPlayerPrefsKey,++level);
+        }
     }
 }
