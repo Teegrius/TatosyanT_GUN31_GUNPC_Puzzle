@@ -62,6 +62,7 @@ namespace Editor.GameField
                     new EraseMovingZonesMode(_gameFieldManager, EraseMovingZone),
                     new SetMainMode(_gameFieldManager),
                     new SetTargetMode(_gameFieldManager),
+                    new DrawStarsMode(_gameFieldManager),
                     new ClearMode(ClearLevelObjects)
                 };
                 _modesNames ??= _sceneModes.Select(t => t.Name).ToArray();
