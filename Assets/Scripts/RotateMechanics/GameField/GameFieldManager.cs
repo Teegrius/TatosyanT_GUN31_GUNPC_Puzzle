@@ -23,6 +23,7 @@ namespace RotateMechanics.GameField
         #region Constants
 
         private const int FieldRotationAngle = 90;
+        private const int MaxStarsCount = 3;
         
         #endregion
 
@@ -36,6 +37,7 @@ namespace RotateMechanics.GameField
         [SerializeField] private TargetObject _targetObject;
         [SerializeField] private MovePoint[] _movePoints;
         [SerializeField] private MovingZone[] _movingZones;
+        [SerializeField] private List<StarObject> _stars;
 
         #endregion
 

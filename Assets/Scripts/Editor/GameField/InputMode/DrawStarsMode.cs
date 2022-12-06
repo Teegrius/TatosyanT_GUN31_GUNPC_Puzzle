@@ -17,7 +17,15 @@ namespace Editor.GameField.InputMode
                 return;
             }
 
-            
+            if (!_gameFieldManager.TryGetMovePoint(mousePosition, out var movePoint))
+            {
+                return;
+            }
+
+            if (!_gameFieldManager.TryAddStar(movePoint, out var message))
+            {
+                Debug.LogError(message);
+            }
         }
     }
 }

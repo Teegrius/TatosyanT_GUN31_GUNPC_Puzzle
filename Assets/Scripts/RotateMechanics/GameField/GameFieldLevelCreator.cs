@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using SceneObjects;
 using UnityEngine;
 
@@ -108,6 +110,34 @@ namespace RotateMechanics.GameField
         public float GetXGridValue() => _gridSize * (_totalColumns / 2) + _gridSize / 2 * (_totalColumns % 2 - 1);
 
         public float GetYGridValue() => _gridSize * (_totalRows / 2) + (_gridSize / 2) * (_totalRows % 2 - 1);
+
+        public bool TryAddStar(MovePoint point,out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            if (_mainObject.Position == point.Position)
+            {
+                errorMessage = "Can't add star above main object";
+                return false;
+            }
+            if (_targetObject.Position == point.Position)
+            {
+                errorMessage = "Can't add star above target object";
+                return false;
+            }
+
+            if (_stars is { Count: >= MaxStarsCount })
+            {
+                errorMessage = "Can't add more than three stars!";
+                return false;
+            }
+
+            _stars ??=new List<StarObject>();
+            var star = Instantiate(Resources.Load("Star")) as GameObject;
+            star.transform.position = point.Position;
+            star.transform.parent = transform;
+            _stars.Add(star.GetComponent<StarObject>());
+            return true;
+        }
 
         #endregion
 #endif
