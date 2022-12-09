@@ -91,6 +91,7 @@ namespace Editor.GameField
                     index++;
                 }
             }
+            
             void InitializeMovePointsArray(int count)
             {
                 for (var i = 0; i < count; i++)
@@ -196,6 +197,7 @@ namespace Editor.GameField
         {
             DrawLevelParameters();
             DrawCoreParameters();
+            CheckGameObjectPosition();
         }
 
         private void DrawLevelParameters()
@@ -267,6 +269,14 @@ namespace Editor.GameField
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_targetObject"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_movePoints"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_movingZones"));
+            }
+        }
+
+        private void CheckGameObjectPosition()
+        {
+            if (_gameFieldManager.transform.localPosition != Vector3.zero)
+            {
+                _gameFieldManager.transform.localPosition = Vector3.zero;
             }
         }
 

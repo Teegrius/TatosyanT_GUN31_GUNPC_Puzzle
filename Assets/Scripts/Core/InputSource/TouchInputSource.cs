@@ -29,7 +29,7 @@ namespace Core.InputSource
             IsDown = GetInputDown;
             IsHold = GetInputHold;
             IsUp = GetInputUp;
-
+            
             InputPosition = Camera.main.ScreenToWorldPoint(GetInputPosition());
         }
     }

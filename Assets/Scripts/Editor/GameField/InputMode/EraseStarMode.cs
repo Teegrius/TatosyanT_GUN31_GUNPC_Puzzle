@@ -1,13 +1,30 @@
+using RotateMechanics.GameField;
 using UnityEngine;
 
 namespace Editor.GameField.InputMode
 {
     public sealed class EraseStarMode : IEditSceneMode
     {
-        public string Name { get; }
+        private readonly GameFieldManager _gameFieldManager;
+
+        public EraseStarMode(GameFieldManager gameFieldManager) => _gameFieldManager = gameFieldManager;
+
+        public string Name => "Erase Stars";
+        
         public void ProcessInput(Vector2 mousePosition)
         {
-            throw new System.NotImplementedException();
+            if (Event.current.type != EventType.MouseUp)
+            {
+                return;
+            }
+
+            if (!_gameFieldManager.TryGetMovePoint(mousePosition, out var movePoint))
+            {
+                return;
+            }
+
+            _gameFieldManager.TryRemoveStar(movePoint);
+
         }
     }
 }

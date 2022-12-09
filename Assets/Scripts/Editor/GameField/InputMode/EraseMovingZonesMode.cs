@@ -1,5 +1,4 @@
 using System;
-using Core;
 using SceneObjects;
 using UnityEngine;
 using GameFieldManager = RotateMechanics.GameField.GameFieldManager;
@@ -21,12 +20,20 @@ namespace Editor.GameField.InputMode
 
         public void ProcessInput(Vector2 mousePosition)
         {
-            if (Event.current.type != EventType.MouseDown && Event.current.type != EventType.MouseDrag) return;
+            if (Event.current.type != EventType.MouseDown && Event.current.type != EventType.MouseDrag)
+            {
+                return;
+            }
 
-            if (!_gameFieldManager.TryGetMovePoint(mousePosition, out var movePoint)) return;
+            if (!_gameFieldManager.TryGetMovePoint(mousePosition, out var movePoint))
+            {
+                return;
+            }
 
             if (_gameFieldManager.TryGetMovingZone(movePoint.transform.position, out var movingZone))
+            {
                 _onMovingZone?.Invoke(movingZone);
+            }
         }
     }
 }

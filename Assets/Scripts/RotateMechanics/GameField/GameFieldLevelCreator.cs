@@ -75,22 +75,6 @@ namespace RotateMechanics.GameField
 
         #region Grid Calculation
 
-        public bool TryGetMovePoint(Vector2 point, out MovePoint movePoint)
-        {
-            for (var i = 0; i < _movePoints.Length; i++)
-            {
-                if (Mathf.Abs(_movePoints[i].transform.position.x - point.x) <= ClickDelta &&
-                    Mathf.Abs(_movePoints[i].transform.position.y - point.y) <= ClickDelta)
-                {
-                    movePoint = _movePoints[i];
-                    return true;
-                }
-            }
-
-            movePoint = default;
-            return false;
-        }
-
         public bool TryGetMovingZone(Vector2 point, out MovingZone movingZone)
         {
             for (var i = 0; i < _movingZones.Length; i++)
@@ -114,12 +98,12 @@ namespace RotateMechanics.GameField
         public bool TryAddStar(MovePoint point,out string errorMessage)
         {
             errorMessage = string.Empty;
-            if (_mainObject.Position == point.Position)
+            if (_mainObject.LocalPosition == point.LocalPosition)
             {
                 errorMessage = "Can't add star above main object";
                 return false;
             }
-            if (_targetObject.Position == point.Position)
+            if (_targetObject.LocalPosition == point.LocalPosition)
             {
                 errorMessage = "Can't add star above target object";
                 return false;
@@ -133,10 +117,23 @@ namespace RotateMechanics.GameField
 
             _stars ??=new List<StarObject>();
             var star = Instantiate(Resources.Load("Star")) as GameObject;
-            star.transform.position = point.Position;
+            star.transform.position = point.LocalPosition;
             star.transform.parent = transform;
             _stars.Add(star.GetComponent<StarObject>());
             return true;
+        }
+
+        public void TryRemoveStar(MovePoint point)
+        {
+            for (int i = 0; i < _stars.Count; i++)
+            {
+                if (_stars[i].LocalPosition == point.LocalPosition)
+                {
+                    DestroyImmediate(_stars[i]);
+                    _stars.RemoveAt(i);
+                    break;
+                }
+            }
         }
 
         #endregion

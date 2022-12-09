@@ -4,7 +4,7 @@ namespace SceneObjects
 {
     public interface ISceneObject
     {
-        Vector2 Position { get; }
+        Vector2 LocalPosition { get; }
         Transform Transform { get; }
     }
 }

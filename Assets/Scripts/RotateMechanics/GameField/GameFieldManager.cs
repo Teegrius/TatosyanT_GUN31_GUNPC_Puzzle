@@ -49,8 +49,6 @@ namespace RotateMechanics.GameField
         private Transform _movePointsTransform;
         private bool _isRotating;
 
-        private Dictionary<Vector2, MovePoint> _movePositions;
-        
         #endregion
 
         #region State Machine
@@ -85,15 +83,24 @@ namespace RotateMechanics.GameField
 
         private void Start()
         {
-            _movePositions = _movePoints.ToDictionary(point => point.Position, point => point);
             _movePointsTransform = _movePoints[0].transform.parent;
             _defaultFieldRotation = _movePointsTransform.rotation;
-            _mainObjectDefaultPosition = _mainObject.Position;
+            _mainObjectDefaultPosition = _mainObject.LocalPosition;
 
-            _mainObject.Transform.parent = _movePositions[_mainObject.Position].Transform;
-            _targetObject.Transform.parent = _movePositions[_targetObject.Position].Transform;
+            AdjustLevelObjectsToMovePoints(_mainObject);
+            AdjustLevelObjectsToMovePoints(_targetObject);
+
             Subscribe();
             CreateStateMachine();
+        }
+
+        private void AdjustLevelObjectsToMovePoints(SceneObjectAbstract sceneObjectAbstract)
+        {
+            if (TryGetMovePoint(sceneObjectAbstract.Transform.position, out var movePoint))
+            {
+                sceneObjectAbstract.Transform.parent = movePoint.Transform;
+                sceneObjectAbstract.Transform.localPosition = Vector3.zero;
+            }
         }
 
         private void CreateStateMachine()
@@ -126,7 +133,7 @@ namespace RotateMechanics.GameField
                     }
                     else
                     {
-                        _mainObjectStartPosition = _mainObject.Position;
+                        _mainObjectStartPosition = _mainObject.LocalPosition;
                     }
                 })
                 .Event<InputEventArgs>(InputHold, (_, args) =>
@@ -206,64 +213,70 @@ namespace RotateMechanics.GameField
 
         #region Mechanics Methods
 
+        public bool TryGetMovePoint(Vector2 point, out MovePoint movePoint)
+        {
+            for (var i = 0; i < _movePoints.Length; i++)
+            {
+                if (_movePoints[i].IsOnSamePosition(point))
+                {
+                    movePoint = _movePoints[i];
+                    return true;
+                }
+            }
+
+            movePoint = default;
+            return false;
+        }
+        
         private void TryMoveMainObject(Vector2 newPosition)
         {
-            if (_movePositions.TryGetValue(newPosition, out var movePoint) && IsWithinMoveZone(newPosition))
+            if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(newPosition))
             {
-                _mainObject.Transform.position = newPosition;
                 _mainObject.Transform.parent = movePoint.Transform;
+                _mainObject.Transform.localPosition = Vector3.zero;
                 CheckWinCondition();
             }
         }
 
         private void CheckWinCondition()
         {
-            if (_mainObject.Position == _targetObject.Position)
+            if (_mainObject.IsOnSamePosition(_targetObject))
             {
                 Messenger.Send(new LevelCompleted());
                 Messenger.Send(new SetInputActiveState {IsActive = true});
             }
         }
-
-        private bool IsWithinMoveZone(Vector2 newPosition)
-        {
-            for (var i = 0; i < _movingZones.Length; i++)
-            {
-                var movingZone = _movingZones[i];
-                if (movingZone.Position.x == newPosition.x && movingZone.Position.y == newPosition.y)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        private bool IsWithinMoveZone(Vector2 newPosition) => _movingZones.Any(t => t.IsOnSamePosition(newPosition));
 
         private IEnumerator RotateRoutine(int angle)
         {
             _isRotating = true;
-            var oldRotation = _movePointsTransform.transform.rotation;
+            var oldRotation = _movePointsTransform.localRotation;
             var newRotation = oldRotation * Quaternion.Euler(0, 0, angle);
             float t = 0;
-            while (t <= 1)
+            while (t <= 1.1f)
             {
-                _movePointsTransform.transform.rotation = Quaternion.Lerp(oldRotation, newRotation, t);
+                _movePointsTransform.localRotation = Quaternion.Lerp(oldRotation, newRotation, t);
                 t += Time.deltaTime;
                 yield return new WaitForEndOfFrame();
             }
-
-            _movePointsTransform.transform.rotation = newRotation;
+            
+            _movePointsTransform.localPosition = Vector3.zero;
+            _mainObject.Transform.localPosition = Vector3.zero;
             _isRotating = false;
+            Messenger.Send(new SetInputActiveState {IsActive = true});
+            yield return new WaitForEndOfFrame();
         }
 
         private void ResetLevel()
         {
             StopCoroutine(RotateRoutine(0));
             _isRotating = false;
+            Messenger.Send(new SetInputActiveState {IsActive = true});
             _movePointsTransform.rotation = _defaultFieldRotation;
             _mainObject.Transform.position = _mainObjectDefaultPosition;
-            _mainObject.Transform.parent = _movePositions[_mainObject.Position].Transform;
-            _targetObject.Transform.parent = _movePositions[_targetObject.Position].Transform;
+            AdjustLevelObjectsToMovePoints(_mainObject);
+            AdjustLevelObjectsToMovePoints(_targetObject);
         }
 
         #endregion
