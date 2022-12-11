@@ -30,9 +30,9 @@ namespace Editor.GameField.InputMode
             }
 
             if (_gameFieldManager.MainObject != null &&
-                movePoint.transform.position == _gameFieldManager.MainObject.transform.position)
+                movePoint.transform.position == _gameFieldManager.MainObject.transform.position || _gameFieldManager.IsPointInsideStar(movePoint))
             {
-                Debug.LogError("Can't put Level Target object into Main Object");
+                Debug.LogError("Can't put Level Target object into other Object");
                 return;
             }
 

@@ -63,6 +63,7 @@ namespace Editor.GameField
                     new SetMainMode(_gameFieldManager),
                     new SetTargetMode(_gameFieldManager),
                     new DrawStarsMode(_gameFieldManager),
+                    new EraseStarMode(_gameFieldManager),
                     new ClearMode(ClearLevelObjects)
                 };
                 _modesNames ??= _sceneModes.Select(t => t.Name).ToArray();
@@ -132,6 +133,7 @@ namespace Editor.GameField
             ClearProperty("_mainObject");
             ClearProperty("_targetObject");
             ClearProperty("_movingZones");
+            ClearProperty("_stars");
         }
 
         private void ClearProperty(string propertyName)
@@ -269,6 +271,7 @@ namespace Editor.GameField
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_targetObject"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_movePoints"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_movingZones"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_stars"));
             }
         }
 

@@ -98,12 +98,12 @@ namespace RotateMechanics.GameField
         public bool TryAddStar(MovePoint point,out string errorMessage)
         {
             errorMessage = string.Empty;
-            if (_mainObject.LocalPosition == point.LocalPosition)
+            if (_mainObject != null && _mainObject.IsOnSamePosition(point))
             {
                 errorMessage = "Can't add star above main object";
                 return false;
             }
-            if (_targetObject.LocalPosition == point.LocalPosition)
+            if (_targetObject != null && _targetObject.IsOnSamePosition(point))
             {
                 errorMessage = "Can't add star above target object";
                 return false;
@@ -115,10 +115,16 @@ namespace RotateMechanics.GameField
                 return false;
             }
 
-            _stars ??=new List<StarObject>();
+            if (IsPointInsideStar(point))
+            {
+                errorMessage = "Can't add star above another!";
+                return false;
+            }
+
+            _stars ??= new List<StarObject>();
             var star = Instantiate(Resources.Load("Star")) as GameObject;
-            star.transform.position = point.LocalPosition;
             star.transform.parent = transform;
+            star.transform.localPosition = point.transform.position;
             _stars.Add(star.GetComponent<StarObject>());
             return true;
         }
@@ -127,13 +133,31 @@ namespace RotateMechanics.GameField
         {
             for (int i = 0; i < _stars.Count; i++)
             {
-                if (_stars[i].LocalPosition == point.LocalPosition)
+                if (_stars[i].IsOnSamePosition(point))
                 {
-                    DestroyImmediate(_stars[i]);
+                    DestroyImmediate(_stars[i].gameObject);
                     _stars.RemoveAt(i);
                     break;
                 }
             }
+        }
+
+        public bool IsPointInsideStar(MovePoint point)
+        {
+            if (_stars == null)
+            {
+                return false;
+            }
+            
+            for (int i = 0; i < _stars.Count; i++)
+            {
+                if (_stars[i].IsOnSamePosition(point))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         #endregion

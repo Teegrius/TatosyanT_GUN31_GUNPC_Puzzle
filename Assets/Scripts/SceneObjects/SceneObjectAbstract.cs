@@ -11,10 +11,10 @@ namespace SceneObjects
         public Transform Transform { get; private set; }
 
         public bool IsOnSamePosition(SceneObjectAbstract objectAbstract) =>
-            IsOnSamePosition(objectAbstract.Transform.position);
+            IsOnSamePosition(objectAbstract.transform.position);
             
         public bool IsOnSamePosition(Vector2 position) =>
-            Mathf.Abs(position.x - Transform.position.x) <= Delta &&
-            Mathf.Abs(position.y - Transform.position.y) <= Delta;
+            Mathf.Abs(position.x - transform.position.x) <= Delta &&
+            Mathf.Abs(position.y - transform.position.y) <= Delta;
     }
 }
