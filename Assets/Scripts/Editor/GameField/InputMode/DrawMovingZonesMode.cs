@@ -1,5 +1,4 @@
 using System;
-using Core;
 using SceneObjects;
 using UnityEditor;
 using UnityEngine;
@@ -12,6 +11,9 @@ namespace Editor.GameField.InputMode
     {
         private readonly GameFieldManager _gameFieldManager;
         private readonly Action<MovingZone> _onMovingZone;
+        private readonly MovingZonesDrawer _drawer;
+        private bool _drawing;
+        private MovePoint _startPoint;
 
         public string Name => "Draw Zones";
 
@@ -19,30 +21,72 @@ namespace Editor.GameField.InputMode
         {
             _gameFieldManager = gameFieldManager;
             _onMovingZone = onMovingZone;
+            _drawer = new MovingZonesDrawer();
         }
 
         public void OnModeSelected() => Tools.current = Tool.Move;
 
         public void ProcessInput(Vector2 mousePosition)
         {
-            if (Event.current.type != EventType.MouseDown && Event.current.type != EventType.MouseDrag)
+            if (Event.current.type == EventType.MouseUp)
             {
-                return;
+                ProcessMouseUp(mousePosition);
             }
 
+            if (Event.current.type == EventType.MouseMove)
+            {
+                ProcessMouseMove(mousePosition);
+            }
+        }
+
+        private void ProcessMouseMove(Vector2 mousePosition)
+        {
+            if (_drawing)
+            {
+                _drawer.DrawTowardsMousePosition(mousePosition);
+            }
+        }
+
+        private void ProcessMouseUp(Vector2 mousePosition)
+        {
             if (!_gameFieldManager.TryGetMovePoint(mousePosition, out var movePoint))
             {
                 return;
             }
-
-            if (_gameFieldManager.TryGetMovingZone(mousePosition, out _))
+            if (!_drawing)
             {
-                return;
-            };
+                _startPoint = movePoint;
+                _drawing = true;
+                _drawer.StartDraw(_startPoint.transform.position);
+            }
+            else
+            {
+                _drawer.StopDraw();
+                MapZoneToPoints(_drawer.MovingZone, movePoint);
+            }
+            
+            
+            
+        }
 
-            var movingZoneObject = Object.Instantiate(Resources.Load("MovingZone")) as GameObject;
-            movingZoneObject.transform.position = movePoint.transform.position;
-            _onMovingZone?.Invoke(movingZoneObject.GetComponent<MovingZone>());
+        private void MapZoneToPoints(MovingZone drawerMovingZone, MovePoint endPoint)
+        {
+            if (_startPoint.transform.position.x != endPoint.transform.position.x ||
+                _startPoint.transform.position.y != endPoint.transform.position.y)
+            {
+                Debug.LogError("Can't map moving zone to grid. Moving zone should be horizontal or vertical");
+                Object.DestroyImmediate(drawerMovingZone.gameObject);
+            }
+
+            if (_startPoint.transform.position.x == endPoint.transform.position.x)
+            {
+                
+            }
+
+            if (_startPoint.transform.position.y == endPoint.transform.position.y)
+            {
+                
+            }
         }
     }
 }
