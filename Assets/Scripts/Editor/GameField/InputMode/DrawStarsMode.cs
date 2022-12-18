@@ -1,4 +1,5 @@
 using RotateMechanics.GameField;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace Editor.GameField.InputMode
@@ -30,6 +31,7 @@ namespace Editor.GameField.InputMode
             {
                 Debug.LogError(message);
             }
+            EditorSceneManager.SaveOpenScenes();
         }
     }
 }

@@ -100,6 +100,7 @@ namespace Editor.GameField.InputMode
                 drawerMovingZone.transform.position = new Vector2(centerX, endPosition.y);
             }
             _onMovingZone?.Invoke(drawerMovingZone);
+            EditorUtility.SetDirty(_gameFieldManager);
         }
 
         private void SetZoneSize(MovingZone drawerMovingZone, float start, float end, out float center)

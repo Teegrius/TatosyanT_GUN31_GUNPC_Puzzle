@@ -252,7 +252,7 @@ namespace RotateMechanics.GameField
             if (_mainObject.IsOnSamePosition(_targetObject))
             {
                 Messenger.Send(new LevelCompleted());
-                Messenger.Send(new SetInputActiveState {IsActive = true});
+                Messenger.Send(new SetInputActiveState {IsActive = false});
             }
         }
         private bool IsWithinMoveZone(Vector2 newPosition) => _movingZones.Any(t => t.IsOnSamePosition(newPosition));

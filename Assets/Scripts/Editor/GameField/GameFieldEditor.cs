@@ -5,6 +5,7 @@ using Editor.GameField.InputMode;
 using SceneObjects;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using GameFieldManager = RotateMechanics.GameField.GameFieldManager;
 
@@ -120,6 +121,7 @@ namespace Editor.GameField
             property.InsertArrayElementAtIndex(property.arraySize);
             property.GetArrayElementAtIndex(property.arraySize - 1).objectReferenceValue = movingZone;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorSceneManager.SaveOpenScenes();
         }
 
         private void EraseMovingZone(MovingZone movingZone)
@@ -136,6 +138,7 @@ namespace Editor.GameField
                     break;
                 }
             }
+            EditorSceneManager.SaveOpenScenes();
         }
 
         private void ClearLevelObjects()
@@ -144,6 +147,7 @@ namespace Editor.GameField
             ClearProperty("_targetObject");
             ClearProperty("_movingZones");
             ClearProperty("_stars");
+            EditorSceneManager.SaveOpenScenes();
         }
 
         private void ClearProperty(string propertyName)

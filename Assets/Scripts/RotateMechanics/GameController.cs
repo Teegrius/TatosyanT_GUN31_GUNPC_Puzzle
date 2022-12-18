@@ -1,14 +1,16 @@
 using Core.MessageSystem;
 using DefaultNamespace;
 using Messages;
+using UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace RotateMechanics
 {
-    public sealed class GameController : MonoBehaviour, IMessageListener<LevelCompleted>
+    public sealed class GameController : MonoBehaviour, IMessageListener<OpenNextLevel>
     {
         private AudioSource _audioSource;
+        [SerializeField, LevelName] private string _levelName;
         
         private void Awake()
         {
@@ -24,20 +26,6 @@ namespace RotateMechanics
 
         private void OnDestroy() => Messenger.Unsubscribe(this);
 
-        public void OnMessage(LevelCompleted message)
-        {
-            SetPlayerPrefsValue();
-            SceneManager.LoadScene("Main");
-        }
-
-        private void SetPlayerPrefsValue()
-        {
-            if (!PlayerPrefs.HasKey(RotateConstants.LevelPlayerPrefsKey))
-            {
-                PlayerPrefs.SetInt(RotateConstants.LevelPlayerPrefsKey,1);
-            }
-            int level = PlayerPrefs.GetInt(RotateConstants.LevelPlayerPrefsKey);
-            PlayerPrefs.SetInt(RotateConstants.LevelPlayerPrefsKey,++level);
-        }
+        public void OnMessage(OpenNextLevel message) => SceneManager.LoadScene(_levelName);
     }
 }

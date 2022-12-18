@@ -1,6 +1,7 @@
 using Core;
 using SceneObjects;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using GameFieldManager = RotateMechanics.GameField.GameFieldManager;
 
@@ -47,6 +48,7 @@ namespace Editor.GameField.InputMode
             }
 
             _gameFieldManager.TargetObject.transform.position = movePoint.transform.position;
+            EditorUtility.SetDirty(_gameFieldManager);
         }
     }
 }

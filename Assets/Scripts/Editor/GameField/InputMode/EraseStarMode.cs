@@ -1,4 +1,6 @@
 using RotateMechanics.GameField;
+using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace Editor.GameField.InputMode
@@ -26,7 +28,7 @@ namespace Editor.GameField.InputMode
             }
 
             _gameFieldManager.TryRemoveStar(movePoint);
-
+            EditorUtility.SetDirty(_gameFieldManager);
         }
     }
 }

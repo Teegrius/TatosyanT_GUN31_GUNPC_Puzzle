@@ -1,5 +1,6 @@
 using System;
 using SceneObjects;
+using UnityEditor;
 using UnityEngine;
 using GameFieldManager = RotateMechanics.GameField.GameFieldManager;
 
@@ -30,6 +31,7 @@ namespace Editor.GameField.InputMode
             if (_gameFieldManager.TryGetMovingZone(mousePosition, out var movingZone))
             {
                 _onMovingZone?.Invoke(movingZone);
+                EditorUtility.SetDirty(_gameFieldManager);
             }
         }
     }
