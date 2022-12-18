@@ -230,7 +230,7 @@ namespace RotateMechanics.GameField
         
         private void TryMoveMainObject(Vector2 newPosition)
         {
-            if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(newPosition))
+            if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint.LocalPosition))
             {
                 _mainObject.Transform.parent = movePoint.Transform;
                 _mainObject.Transform.localPosition = Vector3.zero;

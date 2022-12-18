@@ -14,6 +14,8 @@ namespace Editor.GameField.InputMode
         private readonly MovingZonesDrawer _drawer;
         private bool _drawing;
         private MovePoint _startPoint;
+        private Vector3 startPosition;
+        private Vector3 endPosition;
 
         public string Name => "Draw Zones";
 
@@ -62,31 +64,47 @@ namespace Editor.GameField.InputMode
             else
             {
                 _drawer.StopDraw();
+                _drawing = false;
                 MapZoneToPoints(_drawer.MovingZone, movePoint);
             }
-            
-            
-            
         }
 
         private void MapZoneToPoints(MovingZone drawerMovingZone, MovePoint endPoint)
         {
-            if (_startPoint.transform.position.x != endPoint.transform.position.x ||
-                _startPoint.transform.position.y != endPoint.transform.position.y)
+            startPosition = _startPoint.transform.position;
+
+            endPosition = endPoint.transform.position;
+            if (startPosition.x != endPosition.x &&
+                startPosition.y != endPosition.y)
             {
                 Debug.LogError("Can't map moving zone to grid. Moving zone should be horizontal or vertical");
                 Object.DestroyImmediate(drawerMovingZone.gameObject);
+                return;
             }
 
-            if (_startPoint.transform.position.x == endPoint.transform.position.x)
+            if (Mathf.Approximately(startPosition.x ,endPosition.x))
             {
-                
+                SetZoneSize(drawerMovingZone, startPosition.y, endPosition.y, out var centerY);
+                drawerMovingZone.transform.rotation = Quaternion.Euler(0,0,90);
+                drawerMovingZone.transform.position = new Vector2(endPosition.x, centerY);
+
             }
 
-            if (_startPoint.transform.position.y == endPoint.transform.position.y)
+            if (Mathf.Approximately(startPosition.y,endPosition.y))
             {
-                
+                SetZoneSize(drawerMovingZone, startPosition.x, endPosition.x, out var centerX);
+                drawerMovingZone.transform.rotation = Quaternion.Euler(0,0,0);
+                drawerMovingZone.transform.position = new Vector2(centerX, endPosition.y);
             }
+            _onMovingZone?.Invoke(drawerMovingZone);
+        }
+
+        private void SetZoneSize(MovingZone drawerMovingZone, float start, float end, out float center)
+        {
+            center = (start + end) / 2f;
+            var length = Mathf.Abs(end - start) + 0.5f;
+            drawerMovingZone.GetComponent<SpriteRenderer>().size =
+                new Vector2(length, 0.5f);
         }
     }
 }

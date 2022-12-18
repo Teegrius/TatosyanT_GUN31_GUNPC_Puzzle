@@ -79,8 +79,7 @@ namespace RotateMechanics.GameField
         {
             for (var i = 0; i < _movingZones.Length; i++)
             {
-                if (Mathf.Abs(_movingZones[i].transform.position.x - point.x) <= ClickDelta &&
-                    Mathf.Abs(_movingZones[i].transform.position.y - point.y) <= ClickDelta)
+                if (_movingZones[i].IsOnSamePosition(point))
                 {
                     movingZone = _movingZones[i];
                     return true;

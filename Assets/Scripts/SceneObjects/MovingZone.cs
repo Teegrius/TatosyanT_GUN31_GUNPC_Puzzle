@@ -1,27 +1,36 @@
-using Core;
+using UnityEngine;
 
 namespace SceneObjects
 {
-    public sealed class MovingZone : SceneObjectAbstract, IInitializable<MovePoint[]>
+    public sealed class MovingZone : SceneObjectAbstract
     {
-        private MovePoint[] _pointsInsideZone;
+        private Vector2? _size;
 
-        public override bool IsOnSamePosition(SceneObjectAbstract objectAbstract)
+        public Vector2 Size
         {
-            for (int i = 0; i < _pointsInsideZone.Length; i++)
+            get
             {
-                if (_pointsInsideZone[i].IsOnSamePosition(objectAbstract))
-                {
-                    return true;
-                }
+                _size ??= GetComponent<SpriteRenderer>().size;
+                return _size.Value;
             }
-            
-            return base.IsOnSamePosition(objectAbstract);
         }
-
-        public void Initialize(MovePoint[] type)
+        
+        //TODO Design violation
+        public override bool IsOnSamePosition(Vector2 position)
         {
-            throw new System.NotImplementedException();
+            if (transform.rotation == Quaternion.identity)
+            {
+                return transform.position.x - Size.x < position.x &&
+                       transform.position.x + Size.x > position.x
+                       && transform.position.y - Size.y < position.y &&
+                       transform.position.y + Size.y > position.y;
+            }
+
+            return transform.position.x - Size.y < position.x &&
+                   transform.position.x + Size.y > position.x
+                   && transform.position.y - Size.x < position.y &&
+                   transform.position.y + Size.x > position.y;
+
         }
     }
 }

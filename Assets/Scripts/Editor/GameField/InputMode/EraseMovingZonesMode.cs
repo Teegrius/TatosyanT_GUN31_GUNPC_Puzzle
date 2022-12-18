@@ -25,12 +25,7 @@ namespace Editor.GameField.InputMode
                 return;
             }
 
-            if (!_gameFieldManager.TryGetMovePoint(mousePosition, out var movePoint))
-            {
-                return;
-            }
-
-            if (_gameFieldManager.TryGetMovingZone(movePoint.transform.position, out var movingZone))
+            if (_gameFieldManager.TryGetMovingZone(mousePosition, out var movingZone))
             {
                 _onMovingZone?.Invoke(movingZone);
             }
