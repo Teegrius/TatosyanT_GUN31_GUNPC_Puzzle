@@ -10,7 +10,9 @@ namespace Editor.GameField.InputMode
         public EraseStarMode(GameFieldManager gameFieldManager) => _gameFieldManager = gameFieldManager;
 
         public string Name => "Erase Stars";
-        
+
+        public string Description => "Click on a star to erase it";
+
         public void ProcessInput(Vector2 mousePosition)
         {
             if (Event.current.type != EventType.MouseUp)

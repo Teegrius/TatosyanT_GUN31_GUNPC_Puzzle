@@ -18,6 +18,8 @@ namespace Editor.GameField.InputMode
 
         public string Name => "Erase zones";
 
+        public string Description => "Click on a gray zone to remove it";
+
         public void ProcessInput(Vector2 mousePosition)
         {
             if (Event.current.type != EventType.MouseDown && Event.current.type != EventType.MouseDrag)

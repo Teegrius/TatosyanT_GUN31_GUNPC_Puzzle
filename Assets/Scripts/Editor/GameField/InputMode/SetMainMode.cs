@@ -14,6 +14,9 @@ namespace Editor.GameField.InputMode
 
         public string Name => "Set Main";
 
+        public string Description =>
+            "Click on a point to add main (player) object. Clicking on other point will move object to that point";
+
         public void ProcessInput(Vector2 mousePosition)
         {
             if (Event.current.type != EventType.MouseUp)

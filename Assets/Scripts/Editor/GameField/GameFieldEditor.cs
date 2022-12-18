@@ -13,6 +13,8 @@ namespace Editor.GameField
     [CustomEditor(typeof(GameFieldManager))]
     public sealed class GameFieldEditor : UnityEditor.Editor
     {
+        #region Fields
+
         private GameFieldManager _gameFieldManager;
         private float _gridSize;
         private int _columns;
@@ -34,6 +36,10 @@ namespace Editor.GameField
         private SerializedProperty _rowsProperty;
         private SerializedProperty _gridSizeProperty;
         private SerializedProperty _movePointsProperty;
+
+        #endregion
+
+        #region Init
 
         private void OnEnable()
         {
@@ -103,6 +109,10 @@ namespace Editor.GameField
             }
         }
 
+        #endregion
+
+        #region Unitilis for editor
+
         private void CreateMovingZone(MovingZone movingZone)
         {
             movingZone.transform.parent = _movingZones;
@@ -157,6 +167,10 @@ namespace Editor.GameField
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        #endregion
+
+        #region On Scene GUI
+
         private void OnSceneGUI()
         {
             if (Application.isPlaying)
@@ -170,11 +184,11 @@ namespace Editor.GameField
             void DrawModeTools()
             {
                 Handles.BeginGUI();
-                GUILayout.BeginArea(new Rect(100f, 10f, 800, 40f));
+                GUILayout.BeginArea(new Rect(100f, 10f, 800, 80f));
                 var index = GUILayout.Toolbar(
                     _sceneModeIndex,
                     _sceneModes.Select(t => t.Name).ToArray(),
-                    GUILayout.ExpandHeight(true));
+                    GUILayout.Height(40));
                 if (index != _sceneModeIndex)
                 {
                     _sceneModeIndex = index;
@@ -189,11 +203,40 @@ namespace Editor.GameField
                         _editSceneMode = null;
                     }
                 }
-
+               
+                
+                
+                if (_editSceneMode != null)
+                {
+                    var guiStyle = new GUIStyle
+                    {
+                        normal =
+                        {
+                            background = Texture2D.grayTexture
+                        }
+                    };
+                    GUILayout.BeginVertical(guiStyle);
+                    GUILayout.Label(_editSceneMode.Description, GUILayout.ExpandWidth(true));
+                    GUILayout.EndVertical();
+                }
+                
                 GUILayout.EndArea();
                 Handles.EndGUI();
             }
         }
+
+        private void EventHandler()
+        {
+            HandleUtility.AddDefaultControl(
+                GUIUtility.GetControlID(FocusType.Passive));
+            var mousePosition = Event.current.mousePosition;
+            var worldPos = HandleUtility.GUIPointToWorldRay(mousePosition);
+            _editSceneMode?.ProcessInput(worldPos.origin);
+        }
+
+        #endregion
+
+        #region On Inspector GUI
 
         public override void OnInspectorGUI()
         {
@@ -210,7 +253,7 @@ namespace Editor.GameField
                 GameFieldManager.MaxGridValue, GUILayout.ExpandWidth(true));
             _rowsTemp = EditorGUILayout.IntSlider("Rows", _rowsTemp, GameFieldManager.MinGridValue,
                 GameFieldManager.MaxGridValue, GUILayout.ExpandWidth(true));
-            _gridSizeTemp = EditorGUILayout.Slider("Grid Size", _gridSizeTemp, GameFieldManager.GridSizeMin, GameFieldManager.GridSizeMax, GUILayout.ExpandWidth(true));
+            //_gridSizeTemp = EditorGUILayout.Slider("Grid Size", _gridSizeTemp, GameFieldManager.GridSizeMin, GameFieldManager.GridSizeMax, GUILayout.ExpandWidth(true));
             if (_columnsTemp != _columns || _rowsTemp != _rows || _gridSizeTemp != _gridSize)
             {
                 if (Application.isPlaying)
@@ -283,13 +326,6 @@ namespace Editor.GameField
             }
         }
 
-        private void EventHandler()
-        {
-            HandleUtility.AddDefaultControl(
-                GUIUtility.GetControlID(FocusType.Passive));
-            var mousePosition = Event.current.mousePosition;
-            var worldPos = HandleUtility.GUIPointToWorldRay(mousePosition);
-            _editSceneMode?.ProcessInput(worldPos.origin);
-        }
+        #endregion
     }
 }

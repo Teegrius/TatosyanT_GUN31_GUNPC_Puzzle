@@ -28,6 +28,9 @@ namespace Editor.GameField.InputMode
 
         public void OnModeSelected() => Tools.current = Tool.Move;
 
+        public string Description =>
+            "Select point to start drawing zone, adjust the zone to the next point, and click on that point";
+
         public void ProcessInput(Vector2 mousePosition)
         {
             if (Event.current.type == EventType.MouseUp)
