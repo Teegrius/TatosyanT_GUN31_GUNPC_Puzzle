@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Core.MessageSystem;
 using DefaultNamespace;
 using Messages;
@@ -118,10 +117,6 @@ namespace RotateMechanics.GameField
                 })
                 .Event<InputEventArgs>(InputFinished, (_, args) =>
                 {
-                    if (!IsWithinMoveZone(_mainObject.Transform.position))
-                    {
-                        return;
-                    }
                     var normalized = (args.Position - _startPosition).normalized;
                     TryMoveMainObject(GameFieldMath.CalculateNewPosition(_mainObject, normalized.x, normalized.y, _gridSize));
                 })
@@ -155,10 +150,6 @@ namespace RotateMechanics.GameField
                 })
                 .Event<InputEventArgs>(InputFinished, (_, args) =>
                 {
-                    if (!IsWithinMoveZone(_mainObject.Transform.position))
-                    {
-                        return;
-                    }
                     _mainObject.Transform.position = _mainObjectStartPosition;
                     var normalized = (args.Position - _startPosition).normalized;
                     TryMoveMainObject(GameFieldMath.CalculateNewPosition(_mainObject, normalized.x, normalized.y, _gridSize));
@@ -239,11 +230,35 @@ namespace RotateMechanics.GameField
         
         private void TryMoveMainObject(Vector2 newPosition)
         {
-            if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint.Position))
+            if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint))
             {
                 _mainObject.Transform.parent = movePoint.Transform;
                 _mainObject.Transform.localPosition = Vector3.zero;
                 CheckWinCondition();
+            }
+        }
+
+        private bool IsWithinMoveZone(MovePoint movePoint)
+        {
+            var initialZone = GetMovingZone(_mainObject.Transform.position);
+            var newZone = GetMovingZone(movePoint.Position);
+            if (initialZone == null || newZone == null)
+            {
+                return false;
+            }
+            return initialZone == newZone || newZone.HasIntersection(initialZone);
+
+            MovingZone GetMovingZone(Vector2 position)
+            {
+                for (int i = 0; i < _movingZones.Length; i++)
+                {
+                    if (_movingZones[i].IsOnSamePosition(position))
+                    {
+                        return _movingZones[i];
+                    }
+                }
+
+                return null;
             }
         }
 
@@ -255,7 +270,6 @@ namespace RotateMechanics.GameField
                 Messenger.Send(new SetInputActiveState {IsActive = false});
             }
         }
-        private bool IsWithinMoveZone(Vector2 newPosition) => _movingZones.Any(t => t.IsOnSamePosition(newPosition));
 
         private IEnumerator RotateRoutine(int angle)
         {

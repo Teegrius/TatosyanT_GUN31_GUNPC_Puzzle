@@ -7,13 +7,23 @@ namespace SceneObjects
     public sealed class MovingZone : SceneObjectAbstract
     {
         private Vector2? _size;
+        private SpriteRenderer _renderer;
 
-        public Vector2 Size
+        private Vector2 Size
         {
             get
             {
                 _size ??= GetComponent<SpriteRenderer>().size;
                 return _size.Value;
+            }
+        }
+
+        private Renderer Renderer
+        {
+            get
+            {
+                _renderer ??= GetComponent<SpriteRenderer>();
+                return _renderer;
             }
         }
         
@@ -35,7 +45,7 @@ namespace SceneObjects
                    position.y.IsBetweenRange(transform.position.y + Size.x * RotateConstants.Half, transform.position.y - Size.x * RotateConstants.Half);
 
         }
-        
-        
+
+        public bool HasIntersection(MovingZone zone) => zone.Renderer.bounds.Intersects(Renderer.bounds);
     }
 }
