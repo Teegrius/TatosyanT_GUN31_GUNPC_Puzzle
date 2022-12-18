@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Core.MessageSystem;
+using DefaultNamespace;
 using Messages;
 using Messages.Input;
 using RSG;
@@ -85,7 +86,7 @@ namespace RotateMechanics.GameField
         {
             _movePointsTransform = _movePoints[0].transform.parent;
             _defaultFieldRotation = _movePointsTransform.rotation;
-            _mainObjectDefaultPosition = _mainObject.LocalPosition;
+            _mainObjectDefaultPosition = _mainObject.Position;
 
             AdjustLevelObjectsToMovePoints(_mainObject);
             AdjustLevelObjectsToMovePoints(_targetObject);
@@ -117,6 +118,10 @@ namespace RotateMechanics.GameField
                 })
                 .Event<InputEventArgs>(InputFinished, (_, args) =>
                 {
+                    if (!IsWithinMoveZone(_mainObject.Transform.position))
+                    {
+                        return;
+                    }
                     var normalized = (args.Position - _startPosition).normalized;
                     TryMoveMainObject(GameFieldMath.CalculateNewPosition(_mainObject, normalized.x, normalized.y, _gridSize));
                 })
@@ -133,14 +138,14 @@ namespace RotateMechanics.GameField
                     }
                     else
                     {
-                        _mainObjectStartPosition = _mainObject.LocalPosition;
+                        _mainObjectStartPosition = _mainObject.Position;
                     }
                 })
                 .Event<InputEventArgs>(InputHold, (_, args) =>
                 {
                     _mainObject.Transform.position = _mainObjectStartPosition;
                     var deltaInput = (args.Position - _startPosition);
-                    if (Mathf.Abs(deltaInput.x) > 0.5f || Mathf.Abs(deltaInput.y) > 0.5f)
+                    if (Mathf.Abs(deltaInput.x) > RotateConstants.Half || Mathf.Abs(deltaInput.y) > RotateConstants.Half)
                     {
                         var inputNormalized = deltaInput.normalized;
                         var newPos = GameFieldMath.CalculateNewPosition(_mainObject, inputNormalized.x, inputNormalized.y, _gridSize);
@@ -150,6 +155,10 @@ namespace RotateMechanics.GameField
                 })
                 .Event<InputEventArgs>(InputFinished, (_, args) =>
                 {
+                    if (!IsWithinMoveZone(_mainObject.Transform.position))
+                    {
+                        return;
+                    }
                     _mainObject.Transform.position = _mainObjectStartPosition;
                     var normalized = (args.Position - _startPosition).normalized;
                     TryMoveMainObject(GameFieldMath.CalculateNewPosition(_mainObject, normalized.x, normalized.y, _gridSize));
@@ -163,14 +172,14 @@ namespace RotateMechanics.GameField
                     var delta = args.Position - _startPosition;
                     if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
                     {
-                        StartCoroutine(delta.x > 0
-                            ? RotateRoutine(FieldRotationAngle)
-                            : RotateRoutine(-FieldRotationAngle));
+                        StartCoroutine(delta.x > RotateConstants.Zero
+                            ? RotateRoutine(-FieldRotationAngle)
+                            : RotateRoutine(FieldRotationAngle));
                         return;
                     }
-                    StartCoroutine(delta.y > 0
-                        ? RotateRoutine(-FieldRotationAngle)
-                        : RotateRoutine(FieldRotationAngle));
+                    StartCoroutine(delta.y > RotateConstants.Zero
+                        ? RotateRoutine(FieldRotationAngle)
+                        : RotateRoutine(-FieldRotationAngle));
                 })
                 .Update((_, _) =>
                 {
@@ -230,7 +239,7 @@ namespace RotateMechanics.GameField
         
         private void TryMoveMainObject(Vector2 newPosition)
         {
-            if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint.LocalPosition))
+            if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint.Position))
             {
                 _mainObject.Transform.parent = movePoint.Transform;
                 _mainObject.Transform.localPosition = Vector3.zero;
@@ -252,8 +261,8 @@ namespace RotateMechanics.GameField
         {
             _isRotating = true;
             var oldRotation = _movePointsTransform.localRotation;
-            var newRotation = oldRotation * Quaternion.Euler(0, 0, angle);
-            float t = 0;
+            var newRotation = oldRotation * Quaternion.Euler(RotateConstants.Zero, RotateConstants.Zero, angle);
+            float t = RotateConstants.Zero;
             while (t <= 1.1f)
             {
                 _movePointsTransform.localRotation = Quaternion.Lerp(oldRotation, newRotation, t);
@@ -270,7 +279,7 @@ namespace RotateMechanics.GameField
 
         private void ResetLevel()
         {
-            StopCoroutine(RotateRoutine(0));
+            StopCoroutine(RotateRoutine(RotateConstants.Zero));
             _isRotating = false;
             Messenger.Send(new SetInputActiveState {IsActive = true});
             _movePointsTransform.rotation = _defaultFieldRotation;

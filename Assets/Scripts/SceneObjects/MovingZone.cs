@@ -1,3 +1,5 @@
+using Core;
+using DefaultNamespace;
 using UnityEngine;
 
 namespace SceneObjects
@@ -18,19 +20,22 @@ namespace SceneObjects
         //TODO Design violation
         public override bool IsOnSamePosition(Vector2 position)
         {
+            if (base.IsOnSamePosition(position))
+            {
+                return true;
+            }
+            
             if (transform.rotation == Quaternion.identity)
             {
-                return transform.position.x - Size.x < position.x &&
-                       transform.position.x + Size.x > position.x
-                       && transform.position.y - Size.y < position.y &&
-                       transform.position.y + Size.y > position.y;
+                return position.x.IsBetweenRange(transform.position.x + Size.x * RotateConstants.Half, transform.position.x - Size.x * RotateConstants.Half) &&
+                       position.y.IsBetweenRange(transform.position.y + Size.y * RotateConstants.Half, transform.position.y - Size.y * RotateConstants.Half);
             }
 
-            return transform.position.x - Size.y < position.x &&
-                   transform.position.x + Size.y > position.x
-                   && transform.position.y - Size.x < position.y &&
-                   transform.position.y + Size.x > position.y;
+            return position.x.IsBetweenRange(transform.position.x + Size.y * RotateConstants.Half, transform.position.x - Size.y * RotateConstants.Half) &&
+                   position.y.IsBetweenRange(transform.position.y + Size.x * RotateConstants.Half, transform.position.y - Size.x * RotateConstants.Half);
 
         }
+        
+        
     }
 }

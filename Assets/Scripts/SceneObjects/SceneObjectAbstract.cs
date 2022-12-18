@@ -5,7 +5,7 @@ namespace SceneObjects
     public abstract class SceneObjectAbstract : MonoBehaviour, ISceneObject
     {
         private const float Delta = 0.15f;
-        public Vector2 LocalPosition => Transform.localPosition;
+        public Vector2 Position => Transform.position;
         public Transform Transform { get; private set; }
         
         private void Awake() => Transform = transform;
