@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77b782001e48445484628e221c23c4c9, type: 3}
+  m_Name: GameFieldAnimationSettings
+  m_EditorClassIdentifier: 
+  _moveSpeed: 0
+  _fieldRotationSpeed: 0
+  _xScaleFactor: 0
+  _yScaleFactor: 0
