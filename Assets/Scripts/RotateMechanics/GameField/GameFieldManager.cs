@@ -118,7 +118,7 @@ namespace RotateMechanics.GameField
                 .Event<InputEventArgs>(InputFinished, (_, args) =>
                 {
                     var normalized = (args.Position - _startPosition).normalized;
-                    TryMoveMainObject(GameFieldMath.CalculateNewPosition(_mainObject, normalized.x, normalized.y, _gridSize));
+                    TryMoveMainObject(GameFieldMath.CalculateNewPosition(_mainObject, normalized.x, normalized.y, _gridSize), true);
                 })
                 .Event(DragNDrop, _ => _stateMachine.ChangeState(DragNDropState))
                 .End()
@@ -228,10 +228,15 @@ namespace RotateMechanics.GameField
             return false;
         }
         
-        private void TryMoveMainObject(Vector2 newPosition)
+        private void TryMoveMainObject(Vector2 newPosition, bool withFeedback = false)
         {
             if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint))
             {
+                if (withFeedback)
+                {
+                    StartCoroutine(MoveRoutine(movePoint));
+                    return;
+                }
                 _mainObject.Transform.parent = movePoint.Transform;
                 _mainObject.Transform.localPosition = Vector3.zero;
                 CheckWinCondition();
@@ -289,6 +294,39 @@ namespace RotateMechanics.GameField
             _isRotating = false;
             Messenger.Send(new SetInputActiveState {IsActive = true});
             yield return new WaitForEndOfFrame();
+        }
+
+        private IEnumerator MoveRoutine(MovePoint point)
+        {
+            float t = RotateConstants.Zero;
+            var oldPosition = _mainObject.Position;
+            var startScale = _mainObject.Transform.localScale;
+            while (t <= 1.1f)
+            {
+                _mainObject.Transform.position = Vector3.Lerp(oldPosition, point.Position, t);
+                _mainObject.Transform.localScale = t <= 5 ? Vector3.Lerp(startScale, startScale * 0.8f, t) : Vector3.Lerp(startScale * 0.8f, startScale, t);
+                t += Time.deltaTime * 3;
+                yield return new WaitForEndOfFrame();
+            }
+
+            _mainObject.Transform.localScale = startScale;
+            _mainObject.Transform.parent = point.Transform;
+            _mainObject.Transform.localPosition = Vector3.zero;
+            CheckWinCondition();
+        }
+
+        private IEnumerator ScaleRoutine()
+        {
+            float t = RotateConstants.Zero;
+            var startScale = _mainObject.Transform.localScale;
+            while (t <= 1.1f)
+            {
+                _mainObject.Transform.localScale = t <= 5 ? Vector3.Lerp(startScale, startScale * 0.8f, t) : Vector3.Lerp(startScale * 0.8f, startScale, t);
+                t += Time.deltaTime * 3;
+                yield return new WaitForEndOfFrame();
+            }
+
+            _mainObject.Transform.localScale = startScale;
         }
 
         private void ResetLevel()
