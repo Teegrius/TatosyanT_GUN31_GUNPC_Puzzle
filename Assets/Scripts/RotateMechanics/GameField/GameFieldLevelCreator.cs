@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SceneObjects;
+using UnityEditor;
 using UnityEngine;
 
 namespace RotateMechanics.GameField
@@ -12,7 +13,6 @@ namespace RotateMechanics.GameField
         public const float GridSizeMax = 3f;
         public const short MinGridValue = 3;
         public const short MaxGridValue = 10;
-        private const float ClickDelta = 0.5f;
         private readonly Color _normalColor = Color.green;
         private readonly Color _selectedColor = Color.yellow;
 
@@ -135,7 +135,7 @@ namespace RotateMechanics.GameField
             }
 
             _stars ??= new List<StarObject>();
-            var star = Instantiate(Resources.Load("Star")) as GameObject;
+            var star = PrefabUtility.InstantiatePrefab(Resources.Load("Star"))as GameObject;
             star.transform.parent = transform;
             star.transform.localPosition = point.transform.position;
             _stars.Add(star.GetComponent<StarObject>());

@@ -90,7 +90,7 @@ namespace Editor.GameField
             {
                 for (var row = -y; row <= y; row+=_gridSize)
                 {
-                    var instance = Instantiate(obj) as GameObject;
+                    var instance = PrefabUtility.InstantiatePrefab(obj) as GameObject;
                     instance.transform.position = new Vector3(col, row, 0);
                     instance.transform.parent = _movePoints;
                     _movePointsProperty.GetArrayElementAtIndex(index).objectReferenceValue =

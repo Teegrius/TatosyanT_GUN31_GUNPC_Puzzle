@@ -1,4 +1,5 @@
 using SceneObjects;
+using UnityEditor;
 using UnityEngine;
 
 namespace Editor.GameField.InputMode
@@ -14,7 +15,7 @@ namespace Editor.GameField.InputMode
         public void StartDraw(Vector2 position)
         {
             _startedDrawing = true;
-            var movingZoneObject = Object.Instantiate(Resources.Load("MovingZone")) as GameObject;
+            var movingZoneObject = PrefabUtility.InstantiatePrefab(Resources.Load("MovingZone")) as GameObject;
             _renderer = movingZoneObject.GetComponent<SpriteRenderer>();
             movingZoneObject.transform.position = position;
             _startPosition = position;
