@@ -10,20 +10,21 @@ namespace Core.Tweener
         private readonly Vector3 _position;
         private Vector3 _defaultPosition;
 
-        public MoveTweener(GameObject gameObject, Vector3 position) : base(0)
+        public MoveTweener(GameObject gameObject, Vector3 position, float duration = 1) : base(duration)
         {
             _gameObject = gameObject;
             _position = position;
+            SetDefault();
         }
         
         protected override async Task PlayAsync()
         {
             float t = RotateConstants.Zero;
+            var oldPosition = _gameObject.transform.position;
             while (t <= 1.1f)
             {
-                var oldPosition = _gameObject.transform.position;
                 _gameObject.transform.position = Vector3.Lerp(oldPosition, _position, t);
-                t += Time.deltaTime * Duration;
+                t += Time.deltaTime  /  Duration;
                 await Task.Yield();
             }
         }

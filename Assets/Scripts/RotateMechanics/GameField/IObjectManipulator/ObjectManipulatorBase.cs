@@ -1,3 +1,7 @@
+using Core.MessageSystem;
+using Core.Tweener;
+using DefaultNamespace;
+using Messages;
 using SceneObjects;
 using UnityEngine;
 
@@ -5,12 +9,14 @@ namespace RotateMechanics.GameField.IObjectManipulator
 {
     public abstract class ObjectManipulatorBase : IObjectManipulator
     {
-        [SerializeField] protected MainObject _mainObject;
-        [SerializeField] protected TargetObject _targetObject;
-        [SerializeField] protected MovePoint[] _movePoints;
-        [SerializeField] protected MovingZone[] _movingZones;
+        private const int FieldRotationAngle = 90;
         protected Vector2 StartPosition;
-        protected Transform MovePointsTransform;
+        protected bool IsRotating;
+        protected MainObject MainObject;
+        private TargetObject _targetObject;
+        private MovePoint[] _movePoints;
+        private MovingZone[] _movingZones;
+        private Transform _movePointsTransform;
         private Quaternion _defaultFieldRotation;
         private Vector2 _mainObjectDefaultPosition;
 
@@ -20,23 +26,32 @@ namespace RotateMechanics.GameField.IObjectManipulator
 
         public abstract void OnInputUp(Vector2 position);
 
-        public void Initialize()
+        public void Initialize(MainObject mainObject, TargetObject type2, MovePoint[] type3, MovingZone[] type4)
         {
-            MovePointsTransform = _movePoints[0].transform.parent;
-            _defaultFieldRotation = MovePointsTransform.rotation;
-            _mainObjectDefaultPosition = _mainObject.Position;
-            AdjustLevelObjectsToMovePoints(_mainObject);
-            AdjustLevelObjectsToMovePoints(_targetObject);
+            MainObject = mainObject;
+            _targetObject = type2;
+            _movePoints = type3;
+            _movingZones = type4;
+            InitializeFields();
+
+            void InitializeFields()
+            {
+                _movePointsTransform = _movePoints[0].transform.parent;
+                _defaultFieldRotation = _movePointsTransform.rotation;
+                _mainObjectDefaultPosition = MainObject.Position;
+                AdjustLevelObjectsToMovePoints(MainObject);
+                AdjustLevelObjectsToMovePoints(_targetObject);
+            }
         }
 
         public void Reset()
         {
-            MovePointsTransform.rotation = _defaultFieldRotation;
-            _mainObject.Transform.position = _mainObjectDefaultPosition;
-            AdjustLevelObjectsToMovePoints(_mainObject);
+            _movePointsTransform.rotation = _defaultFieldRotation;
+            MainObject.Transform.position = _mainObjectDefaultPosition;
+            AdjustLevelObjectsToMovePoints(MainObject);
             AdjustLevelObjectsToMovePoints(_targetObject);
         }
-        
+
         private void AdjustLevelObjectsToMovePoints(SceneObjectAbstract sceneObjectAbstract)
         {
             if (TryGetMovePoint(sceneObjectAbstract.Transform.position, out var movePoint))
@@ -60,19 +75,23 @@ namespace RotateMechanics.GameField.IObjectManipulator
             movePoint = default;
             return false;
         }
-        
-        protected void TryMoveMainObject(Vector2 newPosition)
+
+        protected void TryMoveMainObject(Vector2 newPosition, bool animate = false)
         {
             if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint))
             {
-                _mainObject.Transform.parent = movePoint.Transform;
-                _mainObject.Transform.localPosition = Vector3.zero;
+                if (!animate)
+                {
+                    MainObject.Transform.parent = movePoint.Transform;
+                    MainObject.Transform.localPosition = Vector3.zero;
+                    return;
+                }
             }
         }
 
         private bool IsWithinMoveZone(MovePoint movePoint)
         {
-            var initialZone = GetMovingZone(_mainObject.Transform.position);
+            var initialZone = GetMovingZone(MainObject.Transform.position);
             var newZone = GetMovingZone(movePoint.Position);
             if (initialZone == null || newZone == null)
             {
@@ -92,6 +111,28 @@ namespace RotateMechanics.GameField.IObjectManipulator
 
                 return null;
             }
+        }
+
+        protected void Rotate(Vector2 position)
+        {
+            var delta = position - StartPosition;
+            float angle = 0;
+            if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            {
+                angle = delta.x > RotateConstants.Zero ? -FieldRotationAngle : FieldRotationAngle;
+            }
+            else
+            {
+                angle = delta.y > RotateConstants.Zero ? FieldRotationAngle : -FieldRotationAngle;
+            }
+            TweenFactory.RotateAround(_movePointsTransform.gameObject, angle, Vector3.forward)
+                .OnStart(() => Messenger.Send(new SetInputActiveState {IsActive = false}))
+                .OnFinish(() =>
+                {
+                    Messenger.Send(new SetInputActiveState { IsActive = false });
+                    IsRotating = false;
+                })
+                .Play();
         }
     }
 }

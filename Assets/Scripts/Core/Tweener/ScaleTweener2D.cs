@@ -10,20 +10,21 @@ namespace Core.Tweener
         private readonly Vector3 _scale;
         private Vector3 _defaultScale;
 
-        public ScaleTweener2D(GameObject gameObject, Vector2 scale) : base(0)
+        public ScaleTweener2D(GameObject gameObject, Vector2 scale, float duration = 1) : base(duration)
         {
             _gameObject = gameObject;
             _scale = scale;
+            SetDefault();
         }
 
         protected override async Task PlayAsync()
         {
             float t = RotateConstants.Zero;
+            var oldScale = _gameObject.transform.localScale;
             while (t <= 1.1f)
             {
-                var oldScale = _gameObject.transform.localScale;
                 _gameObject.transform.localScale = Vector3.Lerp(oldScale, _scale, t);
-                t += Time.deltaTime * Duration;
+                t += Time.deltaTime / Duration;
                 await Task.Yield();
             }
         }

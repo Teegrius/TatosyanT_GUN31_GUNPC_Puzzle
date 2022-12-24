@@ -11,11 +11,12 @@ namespace Core.Tweener
         private readonly Vector3 _axis;
         private Quaternion _defaultRotation;
 
-        public RotateAroundTweener(GameObject gameObject, float degrees, Vector3 axis) : base(0)
+        public RotateAroundTweener(GameObject gameObject, float degrees, Vector3 axis, float duration = 1) : base(duration)
         {
             _gameObject = gameObject;
             _degrees = degrees;
             _axis = axis;
+            SetDefault();
         }
 
 
@@ -27,15 +28,12 @@ namespace Core.Tweener
             while (t <= 1.1f)
             {
                 _gameObject.transform.localRotation = Quaternion.Lerp(oldRotation, newRotation, t);
-                t += Time.deltaTime * Duration;
+                t += Time.deltaTime / Duration;
                 await Task.Yield();
             }
         }
 
-        protected override void PlayImmediately()
-        {
-            _gameObject.transform.localRotation *= Quaternion.Euler(_axis * _degrees);
-        }
+        protected override void PlayImmediately() => _gameObject.transform.localRotation *= Quaternion.Euler(_axis * _degrees);
 
         protected override void SetDefault() => _defaultRotation = _gameObject.transform.localRotation;
 

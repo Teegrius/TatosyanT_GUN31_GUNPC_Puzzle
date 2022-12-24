@@ -7,6 +7,7 @@ namespace Core.Tweener
         bool IsPlaying { get; }
         float Duration { get;}
         void Play();
+        void Stop();
         ITweener WithDuration(float duration);
 
         ITweener OnStart(Action action);
