@@ -1,7 +1,10 @@
+using System;
+using Core.Interfaces;
 using Core.MessageSystem;
 using Core.Tweener;
 using DefaultNamespace;
 using Messages;
+using RotateMechanics.GameField.Settings;
 using SceneObjects;
 using UnityEngine;
 
@@ -21,6 +24,10 @@ namespace RotateMechanics.GameField.ObjectManipulators
         private Vector2 _mainObjectDefaultPosition;
 
         private ITweener _rotateTweener;
+        private ITweener _moveTweener;
+        private IGameFieldAnimationSettings _gameFieldAnimationSettings;
+
+        public ISettings CurrentSettings => _gameFieldAnimationSettings;
 
         public abstract void OnInputStart(Vector2 position);
 
@@ -45,9 +52,23 @@ namespace RotateMechanics.GameField.ObjectManipulators
                 AdjustLevelObjectsToMovePoints(_targetObject);
             }
         }
+        
+        public void SetSettings(ISettings settings)
+        {
+            if (settings is IGameFieldAnimationSettings gameFieldAnimationSettings)
+            {
+                _gameFieldAnimationSettings = gameFieldAnimationSettings;
+            }
+            else
+            {
+                throw new InvalidCastException(
+                    $"Provided settings {settings} is not of type {typeof(IGameFieldAnimationSettings)}");
+            }
+        }
 
         public void Reset()
         {
+            _rotateTweener?.Stop();
             _movePointsTransform.rotation = _defaultFieldRotation;
             MainObject.Transform.position = _mainObjectDefaultPosition;
             AdjustLevelObjectsToMovePoints(MainObject);
@@ -82,13 +103,44 @@ namespace RotateMechanics.GameField.ObjectManipulators
         {
             if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint))
             {
-                if (!animate)
+                if (animate)
                 {
-                    MainObject.Transform.parent = movePoint.Transform;
-                    MainObject.Transform.localPosition = Vector3.zero;
-                    return;
+                    MoveWithAnimation(movePoint);
+                }
+                else
+                {
+                    MoveImmediately(movePoint);
                 }
             }
+        }
+
+        private void MoveImmediately(MovePoint movePoint)
+        {
+            MainObject.Transform.parent = movePoint.Transform;
+            MainObject.Transform.localPosition = Vector3.zero;
+            MainObject.Transform.localScale = Vector3.one;
+        }
+
+        private void MoveWithAnimation(MovePoint movePoint)
+        {
+            _moveTweener = TweenFactory
+                .Move2D(MainObject.gameObject, movePoint.Position, _gameFieldAnimationSettings.MoveSpeed)
+                .WithSequence(CreateFeedbackStart(movePoint), CreateFeedbackEnd())
+                .OnStart(() => Messenger.Send(new SetInputActiveState { IsActive = false }))
+                .OnFinish(() =>
+                {
+                    Messenger.Send(new SetInputActiveState { IsActive = true });
+                    Messenger.Send(new ObjectMoved());
+                    _moveTweener = null;
+                });
+            
+            _moveTweener.Play();
+            
+            ITweener CreateFeedbackStart(MovePoint point) 
+                => TweenFactory.Scale2D(MainObject.gameObject, GameFieldMath.GetProperFeedbackScale(MainObject, point, _gameFieldAnimationSettings), _gameFieldAnimationSettings.MoveSpeed / 2);
+
+            ITweener CreateFeedbackEnd() 
+                => TweenFactory.Scale2D(MainObject.gameObject, Vector2.one, _gameFieldAnimationSettings.MoveSpeed / 2);
         }
 
         private bool IsWithinMoveZone(MovePoint movePoint)
@@ -127,6 +179,12 @@ namespace RotateMechanics.GameField.ObjectManipulators
             {
                 angle = delta.y > RotateConstants.Zero ? RotateConstants.FieldRotationAngle : -RotateConstants.FieldRotationAngle;
             }
+            
+            StartRotateTweener(angle);
+        }
+
+        private void StartRotateTweener(float angle)
+        {
             _rotateTweener = TweenFactory.RotateAround(_movePointsTransform.gameObject, angle, Vector3.forward)
                 .OnStart(() =>
                 {
@@ -138,8 +196,18 @@ namespace RotateMechanics.GameField.ObjectManipulators
                     Messenger.Send(new SetInputActiveState { IsActive = true });
                     IsRotating = false;
                     MainObject.EnableTrail();
-                });
-            _rotateTweener.Stop();
+                    _rotateTweener = null;
+                })
+                .WithDuration(_gameFieldAnimationSettings.FieldRotationSpeed);
+            
+            _rotateTweener.Play();
+        }
+
+
+        public void Dispose()
+        {
+            _rotateTweener?.Stop();
+            _moveTweener?.Stop();
         }
     }
 }

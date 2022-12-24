@@ -26,7 +26,7 @@ namespace RotateMechanics.GameField.ObjectManipulators
                 return;
             }
             var normalized = (position - StartPosition).normalized;
-            TryMoveMainObject(GameFieldMath.CalculateNewPosition(MainObject, normalized.x, normalized.y, 1));
+            TryMoveMainObject(GameFieldMath.CalculateNewPosition(MainObject, normalized.x, normalized.y, 1), true);
         }
     }
 }

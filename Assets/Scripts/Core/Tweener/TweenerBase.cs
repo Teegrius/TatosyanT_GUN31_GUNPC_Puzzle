@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using DefaultNamespace;
 using UnityEngine;
 
 namespace Core.Tweener
@@ -20,7 +21,7 @@ namespace Core.Tweener
         {
             try
             {
-                if (Duration <= 0)
+                if (Duration <= RotateConstants.Zero)
                 {
                     PlayImmediately();
                     return;

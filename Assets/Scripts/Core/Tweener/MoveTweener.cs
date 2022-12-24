@@ -11,7 +11,7 @@ namespace Core.Tweener
         private readonly Vector3 _position;
         private Vector3 _defaultPosition;
 
-        public MoveTweener(GameObject gameObject, Vector3 position, float duration = 1) : base(duration)
+        public MoveTweener(GameObject gameObject, Vector3 position, float duration = RotateConstants.One) : base(duration)
         {
             _gameObject = gameObject;
             _position = position;
@@ -22,7 +22,7 @@ namespace Core.Tweener
         {
             float t = RotateConstants.Zero;
             var oldPosition = _gameObject.transform.position;
-            while (t <= 1f)
+            while (t <= RotateConstants.One)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

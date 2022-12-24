@@ -1,15 +1,16 @@
 using Core.Tweener.Decorator;
+using DefaultNamespace;
 using UnityEngine;
 
 namespace Core.Tweener
 {
     public static class TweenFactory
     {
-        public static ITweener RotateAround(GameObject gameObject, float degrees, Vector3 axis, float duration = 1) => new RotateAroundTweener(gameObject, degrees, axis, duration);
+        public static ITweener RotateAround(GameObject gameObject, float degrees, Vector3 axis, float duration = RotateConstants.One) => new RotateAroundTweener(gameObject, degrees, axis, duration);
         
-        public static ITweener Scale2D(GameObject gameObject, Vector2 scale, float duration = 1) => new ScaleTweener2D(gameObject, scale, duration);
+        public static ITweener Scale2D(GameObject gameObject, Vector2 scale, float duration = RotateConstants.One) => new ScaleTweener2D(gameObject, scale, duration);
         
-        public static ITweener Move2D(GameObject gameObject, Vector2 position, float duration = 1) => new MoveTweener(gameObject, position, duration);
+        public static ITweener Move2D(GameObject gameObject, Vector2 position, float duration = RotateConstants.One) => new MoveTweener(gameObject, position, duration);
         
         public static ITweener WithScale(this ITweener tweener, GameObject gameObject, Vector2 scale, float duration)
         {

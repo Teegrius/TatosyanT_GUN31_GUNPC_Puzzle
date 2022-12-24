@@ -1,6 +1,8 @@
-namespace RotateMechanics.GameField
+using Core.Interfaces;
+
+namespace RotateMechanics.GameField.Settings
 {
-    public interface IGameFieldAnimationSettings
+    public interface IGameFieldAnimationSettings : ISettings
     {
         float MoveSpeed { get; }
         float FieldRotationSpeed { get; }

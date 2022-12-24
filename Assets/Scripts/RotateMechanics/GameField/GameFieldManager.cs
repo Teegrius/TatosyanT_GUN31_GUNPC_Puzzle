@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Core.Interfaces;
 using Core.MessageSystem;
 using Messages;
 using Messages.Input;
 using RotateMechanics.GameField.ObjectManipulators;
+using RotateMechanics.GameField.Settings;
 using SceneObjects;
 using UnityEngine;
 
@@ -11,7 +13,8 @@ namespace RotateMechanics.GameField
     public sealed partial class GameFieldManager : MonoBehaviour, 
         IGameFieldManager,
         IMessageListener<SetSwipeInput>, 
-        IMessageListener<SetDragNDropInput>
+        IMessageListener<SetDragNDropInput>,
+        IMessageListener<ObjectMoved>
     {
         private const int MaxStarsCount = 3;
         private readonly string Swipe = nameof(Swipe);
@@ -27,6 +30,8 @@ namespace RotateMechanics.GameField
         [SerializeField] private MovingZone[] _movingZones;
         [SerializeField] private List<StarObject> _stars;
 
+        [SerializeField] private GameFieldAnimationSettings _animationSettings;
+
         private IObjectManipulator _currentObjectManipulator;
         private Dictionary<string, IObjectManipulator> _availableManipulators;
 
@@ -36,15 +41,21 @@ namespace RotateMechanics.GameField
         {
             var swipeManipulator = new GameFieldSwipeManipulator();
             swipeManipulator.Initialize(_mainObject, _targetObject, _movePoints, _movingZones);
+            swipeManipulator.SetSettings(GetSettings());
             var dragNDropManipulator = new GameFieldDragNDropManipulator();
             dragNDropManipulator.Initialize(_mainObject, _targetObject, _movePoints, _movingZones);
+            dragNDropManipulator.SetSettings(GetSettings());
+            
             _availableManipulators = new Dictionary<string, IObjectManipulator>()
             {
                 { Swipe, swipeManipulator},
                 { DragNDrop, dragNDropManipulator}
             };
             _currentObjectManipulator = swipeManipulator;
+            
             Subscribe();
+
+            ISettings GetSettings() => _animationSettings == null ? new DefaultFieldSettings() : _animationSettings;
         }
 
         private void Subscribe()
@@ -55,9 +66,14 @@ namespace RotateMechanics.GameField
             Messenger.Subscribe<InputStarted>(this);
             Messenger.Subscribe<InputHold>(this);
             Messenger.Subscribe<InputFinished>(this);
+            Messenger.Subscribe<ObjectMoved>(this);
         }
 
-        private void OnDestroy() => Unsubscribe();
+        private void OnDestroy()
+        {
+            Unsubscribe();
+            _currentObjectManipulator?.Dispose();
+        }
 
         private void Unsubscribe()
         {
@@ -67,6 +83,7 @@ namespace RotateMechanics.GameField
             Messenger.Unsubscribe<InputStarted>(this);
             Messenger.Unsubscribe<InputHold>(this);
             Messenger.Unsubscribe<InputFinished>(this);
+            Messenger.Unsubscribe<ObjectMoved>(this);
         }
 
         private void CheckWinCondition()
@@ -89,5 +106,7 @@ namespace RotateMechanics.GameField
         public void OnMessage(InputHold message) => _currentObjectManipulator.OnInputHold(message.Position);
 
         public void OnMessage(InputFinished message) => _currentObjectManipulator.OnInputUp(message.Position);
+        
+        public void OnMessage(ObjectMoved message) => CheckWinCondition();
     }
 }

@@ -12,7 +12,7 @@ namespace Core.Tweener
         private readonly Vector3 _axis;
         private Quaternion _defaultRotation;
 
-        public RotateAroundTweener(GameObject gameObject, float degrees, Vector3 axis, float duration = 1) : base(duration)
+        public RotateAroundTweener(GameObject gameObject, float degrees, Vector3 axis, float duration = RotateConstants.One) : base(duration)
         {
             _gameObject = gameObject;
             _degrees = degrees;
@@ -26,7 +26,7 @@ namespace Core.Tweener
             var oldRotation = _gameObject.transform.localRotation;
             var newRotation = oldRotation * Quaternion.Euler(_axis * _degrees);
             float t = RotateConstants.Zero;
-            while (t <= 1f)
+            while (t <= RotateConstants.One)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

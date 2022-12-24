@@ -11,7 +11,7 @@ namespace Core.Tweener
         private readonly Vector3 _scale;
         private Vector3 _defaultScale;
 
-        public ScaleTweener2D(GameObject gameObject, Vector2 scale, float duration = 1) : base(duration)
+        public ScaleTweener2D(GameObject gameObject, Vector2 scale, float duration = RotateConstants.One) : base(duration)
         {
             _gameObject = gameObject;
             _scale = scale;
@@ -22,7 +22,7 @@ namespace Core.Tweener
         {
             float t = RotateConstants.Zero;
             var oldScale = _gameObject.transform.localScale;
-            while (t <= 1f)
+            while (t <= RotateConstants.One)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

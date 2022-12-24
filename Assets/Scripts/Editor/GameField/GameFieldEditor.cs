@@ -310,7 +310,8 @@ namespace Editor.GameField
             {
                 return;
             }
-            
+            EditorGUILayout.Space(5);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_animationSettings"));
             _foldoutOpen = EditorGUILayout.Foldout(_foldoutOpen, "Core objects");
             if (_foldoutOpen)
             {
@@ -320,6 +321,8 @@ namespace Editor.GameField
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_movingZones"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_stars"));
             }
+
+            serializedObject.ApplyModifiedProperties();
         }
 
         private void CheckGameObjectPosition()

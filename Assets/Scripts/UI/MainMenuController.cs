@@ -11,10 +11,7 @@ namespace UI
     {
         [SerializeField] private Transform _levelButtonsPanel;
 
-        private void Awake()
-        {
-            Messenger.Subscribe(this);
-        }
+        private void Awake() => Messenger.Subscribe(this);
 
         private void OnDestroy() => Messenger.Unsubscribe(this);
 

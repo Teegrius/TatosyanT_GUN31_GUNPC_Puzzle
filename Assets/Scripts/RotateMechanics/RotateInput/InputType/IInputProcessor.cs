@@ -1,5 +1,6 @@
 using Core;
 using Core.InputSource;
+using Core.Interfaces;
 
 namespace RotateMechanics.RotateInput.InputType
 {
