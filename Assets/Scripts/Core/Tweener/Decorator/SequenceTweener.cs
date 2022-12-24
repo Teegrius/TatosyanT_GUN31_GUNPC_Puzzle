@@ -1,11 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace Core.Tweener.Decorator
 {
-    public sealed class ParallelTweener : ITweener
+    public sealed class SequenceTweener : ITweener
     {
         private readonly ITweener _firstTweener;
         private readonly ITweener _secondTweener;
@@ -13,26 +12,26 @@ namespace Core.Tweener.Decorator
         private Action _onFinish;
         private CancellationTokenSource _source;
 
-        public ParallelTweener(ITweener firstTweener, ITweener secondTweener)
+        public SequenceTweener(ITweener firstTweener, ITweener secondTweener)
         {
             _firstTweener = firstTweener;
             _secondTweener = secondTweener;
         }
-        
+
         public bool IsPlaying { get; private set; }
-        public float Duration => Mathf.Max(_firstTweener.Duration, _secondTweener.Duration);
-        
+        public float Duration => _firstTweener.Duration + _secondTweener.Duration;
         public async void Play()
         {
             try
             {
                 _source = new CancellationTokenSource();
                 IsPlaying = true;
-                await PlayParallel(_source.Token);
+                _onStart?.Invoke();
+                await PlaySequence(_source.Token);
             }
             catch (Exception e)
             {
-
+                
             }
             finally
             {
@@ -41,22 +40,17 @@ namespace Core.Tweener.Decorator
             }
         }
 
-        private async Task PlayParallel(CancellationToken cancellationToken)
+        private async Task PlaySequence(CancellationToken cancellationToken)
         {
-            _onStart?.Invoke();
             _firstTweener.Play();
+            await Task.Delay(TimeSpan.FromSeconds(_firstTweener.Duration), cancellationToken);
             if (cancellationToken.IsCancellationRequested)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 return;
             }
             _secondTweener.Play();
-            await Task.Delay(TimeSpan.FromSeconds(Duration), cancellationToken);
-            if (cancellationToken.IsCancellationRequested)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                return;
-            }
+            await Task.Delay(TimeSpan.FromSeconds(_secondTweener.Duration),cancellationToken);
             _onFinish?.Invoke();
             IsPlaying = false;
         }
@@ -79,7 +73,10 @@ namespace Core.Tweener.Decorator
             _secondTweener.Reset();
         }
 
-        public ITweener WithDuration(float duration) => this;
+        public ITweener WithDuration(float duration)
+        {
+            return this;
+        }
 
         public ITweener OnStart(Action action)
         {

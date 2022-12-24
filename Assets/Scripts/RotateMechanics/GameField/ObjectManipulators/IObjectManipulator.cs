@@ -2,7 +2,7 @@ using Core;
 using SceneObjects;
 using UnityEngine;
 
-namespace RotateMechanics.GameField.IObjectManipulator
+namespace RotateMechanics.GameField.ObjectManipulators
 {
     public interface IObjectManipulator : IResetable, IInitializable<MainObject, TargetObject, MovePoint[], MovingZone[]>
     {

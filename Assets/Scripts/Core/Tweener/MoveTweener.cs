@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using UnityEngine;
@@ -17,14 +18,20 @@ namespace Core.Tweener
             SetDefault();
         }
         
-        protected override async Task PlayAsync()
+        protected override async Task PlayAsync(CancellationToken cancellationToken)
         {
             float t = RotateConstants.Zero;
             var oldPosition = _gameObject.transform.position;
-            while (t <= 1.1f)
+            while (t <= 1f)
             {
-                _gameObject.transform.position = Vector3.Lerp(oldPosition, _position, t);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return;
+                }
+
                 t += Time.deltaTime  /  Duration;
+                _gameObject.transform.position = Vector3.Lerp(oldPosition, _position, t);
                 await Task.Yield();
             }
         }
@@ -33,7 +40,7 @@ namespace Core.Tweener
 
         protected override void SetDefault() => _defaultPosition = _gameObject.transform.position;
 
-        protected override void Reset()
+        public override void Reset()
         {
             base.Reset();
             _gameObject.transform.position = _defaultPosition;

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace RotateMechanics.GameField.IObjectManipulator
+namespace RotateMechanics.GameField.ObjectManipulators
 {
     public sealed class GameFieldSwipeManipulator : ObjectManipulatorBase
     {

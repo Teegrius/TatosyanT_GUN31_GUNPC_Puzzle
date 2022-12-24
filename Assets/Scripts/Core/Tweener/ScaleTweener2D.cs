@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using UnityEngine;
@@ -17,14 +18,20 @@ namespace Core.Tweener
             SetDefault();
         }
 
-        protected override async Task PlayAsync()
+        protected override async Task PlayAsync(CancellationToken cancellationToken)
         {
             float t = RotateConstants.Zero;
             var oldScale = _gameObject.transform.localScale;
-            while (t <= 1.1f)
+            while (t <= 1f)
             {
-                _gameObject.transform.localScale = Vector3.Lerp(oldScale, _scale, t);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return;
+                }
+
                 t += Time.deltaTime / Duration;
+                _gameObject.transform.localScale = Vector3.Lerp(oldScale, _scale, t);
                 await Task.Yield();
             }
         }
@@ -33,6 +40,6 @@ namespace Core.Tweener
 
         protected override void SetDefault() => _defaultScale = _gameObject.transform.localScale;
 
-        protected override void Reset() => _gameObject.transform.localScale = _defaultScale;
+        public override void Reset() => _gameObject.transform.localScale = _defaultScale;
     }
 }

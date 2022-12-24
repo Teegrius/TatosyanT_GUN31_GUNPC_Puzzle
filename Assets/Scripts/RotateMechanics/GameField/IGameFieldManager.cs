@@ -11,7 +11,5 @@ namespace RotateMechanics.GameField
         IMessageListener<InputHold>,
         IMessageListener<InputFinished>
     {
-        void Subscribe();
-        void Unsubscribe();
     }
 }

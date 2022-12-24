@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using UnityEngine;
@@ -20,15 +21,21 @@ namespace Core.Tweener
         }
 
 
-        protected override async Task PlayAsync()
+        protected override async Task PlayAsync(CancellationToken cancellationToken)
         {
             var oldRotation = _gameObject.transform.localRotation;
             var newRotation = oldRotation * Quaternion.Euler(_axis * _degrees);
             float t = RotateConstants.Zero;
-            while (t <= 1.1f)
+            while (t <= 1f)
             {
-                _gameObject.transform.localRotation = Quaternion.Lerp(oldRotation, newRotation, t);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return;
+                }
+
                 t += Time.deltaTime / Duration;
+                _gameObject.transform.localRotation = Quaternion.Lerp(oldRotation, newRotation, t);
                 await Task.Yield();
             }
         }
@@ -37,7 +44,7 @@ namespace Core.Tweener
 
         protected override void SetDefault() => _defaultRotation = _gameObject.transform.localRotation;
 
-        protected override void Reset()
+        public override void Reset()
         {
             base.Reset();
             _gameObject.transform.localRotation = _defaultRotation;

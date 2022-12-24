@@ -1,34 +1,32 @@
-using System;
 using UnityEngine;
 
 namespace Core.Tweener
 {
     public class TweenTest : MonoBehaviour
     {
-        public GameObject Test;
-        private ITweener _rotateLeft;
+        public GameObject Test1;
+        public GameObject Test2;
+        private ITweener _testTweener;
 
         private void Start()
         {
-            // _rotateLeft = TweenFactory.RotateAround(_rotate, 90, Vector3.forward, 1)
-            //     .OnStart((() => Debug.LogError("Start Rotating 1")))
-            //     .OnFinish((() => Debug.LogError("StopRotation 1")))
-            //     .ThenScale(_rotate, Vector2.one * 0.2f, 1)
-            //     .ThenScale(_rotate, Vector2.one * 2, 1);
-            _rotateLeft = TweenFactory.Scale2D(Test, Vector2.one * 0.1f, 10);
-            _rotateLeft.Play();
+            _testTweener = TweenFactory
+                .CreateParallel(TweenFactory.Scale2D(Test1, Vector3.one * 0.3f, 2), TweenFactory.Move2D(Test1, Test1.transform.position + Vector3.right * 5,10))
+                .OnStart(() => Debug.LogError("1"))
+                .OnFinish(() => Debug.LogError("2"));
         }
 
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.R))
             {
-                _rotateLeft.Stop();
+                _testTweener.Stop();
             }
-            // if (Input.GetKeyDown(KeyCode.T))
-            // {
-            //     _rotateRight.Play();
-            // }
+            
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                _testTweener.Play();
+            }
         }
     }
 }

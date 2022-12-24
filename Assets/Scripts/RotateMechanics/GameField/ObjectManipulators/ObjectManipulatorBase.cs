@@ -5,14 +5,14 @@ using Messages;
 using SceneObjects;
 using UnityEngine;
 
-namespace RotateMechanics.GameField.IObjectManipulator
+namespace RotateMechanics.GameField.ObjectManipulators
 {
     public abstract class ObjectManipulatorBase : IObjectManipulator
     {
-        private const int FieldRotationAngle = 90;
         protected Vector2 StartPosition;
         protected bool IsRotating;
         protected MainObject MainObject;
+        
         private TargetObject _targetObject;
         private MovePoint[] _movePoints;
         private MovingZone[] _movingZones;
@@ -20,18 +20,20 @@ namespace RotateMechanics.GameField.IObjectManipulator
         private Quaternion _defaultFieldRotation;
         private Vector2 _mainObjectDefaultPosition;
 
+        private ITweener _rotateTweener;
+
         public abstract void OnInputStart(Vector2 position);
 
         public abstract void OnInputHold(Vector2 position);
 
         public abstract void OnInputUp(Vector2 position);
 
-        public void Initialize(MainObject mainObject, TargetObject type2, MovePoint[] type3, MovingZone[] type4)
+        public void Initialize(MainObject mainObject, TargetObject targetObject, MovePoint[] movePoints, MovingZone[] movingZones)
         {
             MainObject = mainObject;
-            _targetObject = type2;
-            _movePoints = type3;
-            _movingZones = type4;
+            _targetObject = targetObject;
+            _movePoints = movePoints;
+            _movingZones = movingZones;
             InitializeFields();
 
             void InitializeFields()
@@ -119,20 +121,25 @@ namespace RotateMechanics.GameField.IObjectManipulator
             float angle = 0;
             if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
             {
-                angle = delta.x > RotateConstants.Zero ? -FieldRotationAngle : FieldRotationAngle;
+                angle = delta.x > RotateConstants.Zero ? -RotateConstants.FieldRotationAngle : RotateConstants.FieldRotationAngle;
             }
             else
             {
-                angle = delta.y > RotateConstants.Zero ? FieldRotationAngle : -FieldRotationAngle;
+                angle = delta.y > RotateConstants.Zero ? RotateConstants.FieldRotationAngle : -RotateConstants.FieldRotationAngle;
             }
-            TweenFactory.RotateAround(_movePointsTransform.gameObject, angle, Vector3.forward)
-                .OnStart(() => Messenger.Send(new SetInputActiveState {IsActive = false}))
-                .OnFinish(() =>
+            _rotateTweener = TweenFactory.RotateAround(_movePointsTransform.gameObject, angle, Vector3.forward)
+                .OnStart(() =>
                 {
                     Messenger.Send(new SetInputActiveState { IsActive = false });
-                    IsRotating = false;
+                    MainObject.DisableTrail();
                 })
-                .Play();
+                .OnFinish(() =>
+                {
+                    Messenger.Send(new SetInputActiveState { IsActive = true });
+                    IsRotating = false;
+                    MainObject.EnableTrail();
+                });
+            _rotateTweener.Stop();
         }
     }
 }

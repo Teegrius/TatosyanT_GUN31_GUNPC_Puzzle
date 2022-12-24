@@ -74,6 +74,21 @@ namespace RotateMechanics.GameField
         #endregion
 
         #region Grid Calculation
+        
+        public bool TryGetMovePoint(Vector2 point, out MovePoint movePoint)
+        {
+            for (var i = 0; i < _movePoints.Length; i++)
+            {
+                if (_movePoints[i].IsOnSamePosition(point))
+                {
+                    movePoint = _movePoints[i];
+                    return true;
+                }
+            }
+
+            movePoint = default;
+            return false;
+        }
 
         public bool TryGetMovingZone(Vector2 point, out MovingZone movingZone)
         {

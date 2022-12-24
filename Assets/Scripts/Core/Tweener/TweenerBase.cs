@@ -10,14 +10,11 @@ namespace Core.Tweener
         private Action _onStart;
         private Action _onFinish;
         private CancellationTokenSource _cancellationTokenSource;
+        
         public bool IsPlaying { get; private set; }
         public float Duration { get; private set; }
 
-        protected TweenerBase(float duration)
-        {
-            Duration = duration;
-            _cancellationTokenSource = new CancellationTokenSource();
-        }
+        protected TweenerBase(float duration) => Duration = duration;
 
         public async void Play()
         {
@@ -34,36 +31,40 @@ namespace Core.Tweener
                     Debug.LogError("Tweener is alreadpy playing");
                     return;
                 }
+
+                _cancellationTokenSource = new CancellationTokenSource();
                 IsPlaying = true;
                 _onStart?.Invoke();
-                await PlayAsync().WithCancellation(_cancellationTokenSource.Token);
-                _onFinish?.Invoke();
+                await PlayAsync(_cancellationTokenSource.Token);
             }
-            catch (Exception e)
+            catch (OperationCanceledException)
             {
-                Debug.LogError($"Exception while playing animation\n {e.Message}");
+                Debug.LogWarning($"Tweener {GetType().Name} was canceled");
+                Reset();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"Exception while playing animation\n {exception.Message}");
                 Reset();
             }
             finally
             {
                 IsPlaying = false;
+                _onFinish?.Invoke();
             }
-            
         }
 
         public void Stop()
         {
-            _cancellationTokenSource.Cancel();
+            if (!IsPlaying)
+            {
+                return;
+            }
+            _cancellationTokenSource?.Cancel();
             Reset();
         }
 
-        protected abstract Task PlayAsync();
-
-        protected abstract void PlayImmediately();
-
-        protected abstract void SetDefault();
-
-        protected virtual void Reset() => IsPlaying = false;
+        public virtual void Reset() => IsPlaying = false;
 
         public ITweener WithDuration(float duration)
         {
@@ -82,5 +83,11 @@ namespace Core.Tweener
             _onFinish = action;
             return this;
         }
+
+        protected abstract Task PlayAsync(CancellationToken cancellationToken);
+
+        protected abstract void PlayImmediately();
+
+        protected abstract void SetDefault();
     }
 }

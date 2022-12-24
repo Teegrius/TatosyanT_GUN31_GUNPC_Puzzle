@@ -1,33 +1,21 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using Core.MessageSystem;
-using DefaultNamespace;
 using Messages;
 using Messages.Input;
-using RSG;
+using RotateMechanics.GameField.ObjectManipulators;
 using SceneObjects;
 using UnityEngine;
 
 namespace RotateMechanics.GameField
 {
     public sealed partial class GameFieldManager : MonoBehaviour, 
-        IMessageListener<LevelRestarted>, 
+        IGameFieldManager,
         IMessageListener<SetSwipeInput>, 
-        IMessageListener<SetDragNDropInput>,
-        IMessageListener<InputStarted>,
-        IMessageListener<InputHold>,
-        IMessageListener<InputFinished>
-        
+        IMessageListener<SetDragNDropInput>
     {
-        #region Constants
-
-        private const int FieldRotationAngle = 90;
         private const int MaxStarsCount = 3;
-        
-        #endregion
-
-        #region Serialize Fields
+        private readonly string Swipe = nameof(Swipe);
+        private readonly string DragNDrop = nameof(DragNDrop);
 
         [SerializeField] private int _totalColumns = 5;
         [SerializeField] private int _totalRows = 5;
@@ -39,150 +27,24 @@ namespace RotateMechanics.GameField
         [SerializeField] private MovingZone[] _movingZones;
         [SerializeField] private List<StarObject> _stars;
 
-        #endregion
+        private IObjectManipulator _currentObjectManipulator;
+        private Dictionary<string, IObjectManipulator> _availableManipulators;
 
-        #region Private NonSerialized Fields
+        private void Start() => Initialize();
 
-        private Quaternion _defaultFieldRotation;
-        private Vector2 _mainObjectDefaultPosition;
-
-        private Transform _movePointsTransform;
-        private bool _isRotating;
-
-        #endregion
-
-        #region State Machine
-
-        private IState _stateMachine;
-        //states
-        private readonly string Idle = nameof(Idle);
-        private readonly string SwipeState = nameof(SwipeState);
-        private readonly string DragNDropState = nameof(DragNDropState);
-        private readonly string RotateLevelState = nameof(RotateLevelState);
-
-        //events
-        private readonly string Swipe = nameof(Swipe);
-        private readonly string DragNDrop = nameof(DragNDrop);
-        private readonly string InputStarted = nameof(InputStarted);
-        private readonly string InputHold = nameof(InputHold);
-        private readonly string InputFinished = nameof(InputFinished);
-
-        private Vector2 _startPosition;
-        private Vector2 _mainObjectStartPosition;
-
-        private sealed class InputEventArgs : EventArgs
+        public void Initialize()
         {
-            public readonly Vector2 Position;
-
-            public InputEventArgs(Vector2 position) => Position = position;
-        }
-
-        #endregion
-
-        #region Event Methods
-
-        private void Start()
-        {
-            _movePointsTransform = _movePoints[0].transform.parent;
-            _defaultFieldRotation = _movePointsTransform.rotation;
-            _mainObjectDefaultPosition = _mainObject.Position;
-
-            AdjustLevelObjectsToMovePoints(_mainObject);
-            AdjustLevelObjectsToMovePoints(_targetObject);
-
-            Subscribe();
-            CreateStateMachine();
-        }
-
-        private void AdjustLevelObjectsToMovePoints(SceneObjectAbstract sceneObjectAbstract)
-        {
-            if (TryGetMovePoint(sceneObjectAbstract.Transform.position, out var movePoint))
+            var swipeManipulator = new GameFieldSwipeManipulator();
+            swipeManipulator.Initialize(_mainObject, _targetObject, _movePoints, _movingZones);
+            var dragNDropManipulator = new GameFieldDragNDropManipulator();
+            dragNDropManipulator.Initialize(_mainObject, _targetObject, _movePoints, _movingZones);
+            _availableManipulators = new Dictionary<string, IObjectManipulator>()
             {
-                sceneObjectAbstract.Transform.parent = movePoint.Transform;
-                sceneObjectAbstract.Transform.localPosition = Vector3.zero;
-            }
-        }
-
-        private void CreateStateMachine()
-        {
-            _stateMachine = new StateMachineBuilder()
-                .State(SwipeState)
-                .Event<InputEventArgs>(InputStarted, (_, args) =>
-                {
-                    _startPosition = args.Position;
-                    if (!_mainObject.Selected)
-                    {
-                        _stateMachine.ChangeState(RotateLevelState);
-                    }
-                })
-                .Event<InputEventArgs>(InputFinished, (_, args) =>
-                {
-                    var normalized = (args.Position - _startPosition).normalized;
-                    TryMoveMainObject(GameFieldMath.CalculateNewPosition(_mainObject, normalized.x, normalized.y, _gridSize), true);
-                })
-                .Event(DragNDrop, _ => _stateMachine.ChangeState(DragNDropState))
-                .End()
-                .State(DragNDropState)
-                .Event(Swipe, _ => _stateMachine.ChangeState(SwipeState))
-                .Event<InputEventArgs>(InputStarted, (_, args) =>
-                {
-                    _startPosition = args.Position;
-                    if (!_mainObject.Selected)
-                    {
-                        _stateMachine.ChangeState(RotateLevelState);
-                    }
-                    else
-                    {
-                        _mainObjectStartPosition = _mainObject.Position;
-                    }
-                })
-                .Event<InputEventArgs>(InputHold, (_, args) =>
-                {
-                    _mainObject.Transform.position = _mainObjectStartPosition;
-                    var deltaInput = (args.Position - _startPosition);
-                    if (Mathf.Abs(deltaInput.x) > RotateConstants.Half || Mathf.Abs(deltaInput.y) > RotateConstants.Half)
-                    {
-                        var inputNormalized = deltaInput.normalized;
-                        var newPos = GameFieldMath.CalculateNewPosition(_mainObject, inputNormalized.x, inputNormalized.y, _gridSize);
-                        _mainObject.Transform.position =
-                            newPos;
-                    }
-                })
-                .Event<InputEventArgs>(InputFinished, (_, args) =>
-                {
-                    _mainObject.Transform.position = _mainObjectStartPosition;
-                    var normalized = (args.Position - _startPosition).normalized;
-                    TryMoveMainObject(GameFieldMath.CalculateNewPosition(_mainObject, normalized.x, normalized.y, _gridSize));
-                })
-                .End()
-                .State(RotateLevelState)
-                .Enter(_ => _isRotating = true)
-                .Event<InputEventArgs>(InputFinished, (_, args) =>
-                {
-                    Messenger.Send(new SetInputActiveState {IsActive = false});
-                    var delta = args.Position - _startPosition;
-                    if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
-                    {
-                        StartCoroutine(delta.x > RotateConstants.Zero
-                            ? RotateRoutine(-FieldRotationAngle)
-                            : RotateRoutine(FieldRotationAngle));
-                        return;
-                    }
-                    StartCoroutine(delta.y > RotateConstants.Zero
-                        ? RotateRoutine(FieldRotationAngle)
-                        : RotateRoutine(-FieldRotationAngle));
-                })
-                .Update((_, _) =>
-                {
-                    if (!_isRotating)
-                    {
-                        _stateMachine.ChangeState(SwipeState);
-                    }
-                })
-                .Exit(_ => Messenger.Send(new SetInputActiveState {IsActive = true}))
-                .End()
-                .Build();
-            _stateMachine.ChangeState(SwipeState);
+                { Swipe, swipeManipulator},
+                { DragNDrop, dragNDropManipulator}
+            };
+            _currentObjectManipulator = swipeManipulator;
+            Subscribe();
         }
 
         private void Subscribe()
@@ -194,8 +56,6 @@ namespace RotateMechanics.GameField
             Messenger.Subscribe<InputHold>(this);
             Messenger.Subscribe<InputFinished>(this);
         }
-
-        private void Update() => _stateMachine.Update(Time.deltaTime);
 
         private void OnDestroy() => Unsubscribe();
 
@@ -209,64 +69,6 @@ namespace RotateMechanics.GameField
             Messenger.Unsubscribe<InputFinished>(this);
         }
 
-        #endregion
-
-        #region Mechanics Methods
-
-        public bool TryGetMovePoint(Vector2 point, out MovePoint movePoint)
-        {
-            for (var i = 0; i < _movePoints.Length; i++)
-            {
-                if (_movePoints[i].IsOnSamePosition(point))
-                {
-                    movePoint = _movePoints[i];
-                    return true;
-                }
-            }
-
-            movePoint = default;
-            return false;
-        }
-        
-        private void TryMoveMainObject(Vector2 newPosition, bool withFeedback = false)
-        {
-            if (TryGetMovePoint(newPosition, out var movePoint) && IsWithinMoveZone(movePoint))
-            {
-                if (withFeedback)
-                {
-                    StartCoroutine(MoveRoutine(movePoint));
-                    return;
-                }
-                _mainObject.Transform.parent = movePoint.Transform;
-                _mainObject.Transform.localPosition = Vector3.zero;
-                CheckWinCondition();
-            }
-        }
-
-        private bool IsWithinMoveZone(MovePoint movePoint)
-        {
-            var initialZone = GetMovingZone(_mainObject.Transform.position);
-            var newZone = GetMovingZone(movePoint.Position);
-            if (initialZone == null || newZone == null)
-            {
-                return false;
-            }
-            return initialZone == newZone || newZone.HasIntersection(initialZone);
-
-            MovingZone GetMovingZone(Vector2 position)
-            {
-                for (int i = 0; i < _movingZones.Length; i++)
-                {
-                    if (_movingZones[i].IsOnSamePosition(position))
-                    {
-                        return _movingZones[i];
-                    }
-                }
-
-                return null;
-            }
-        }
-
         private void CheckWinCondition()
         {
             if (_mainObject.IsOnSamePosition(_targetObject))
@@ -276,86 +78,16 @@ namespace RotateMechanics.GameField
             }
         }
 
-        private IEnumerator RotateRoutine(int angle)
-        {
-            _isRotating = true;
-            var oldRotation = _movePointsTransform.localRotation;
-            var newRotation = oldRotation * Quaternion.Euler(RotateConstants.Zero, RotateConstants.Zero, angle);
-            float t = RotateConstants.Zero;
-            while (t <= 1.1f)
-            {
-                _movePointsTransform.localRotation = Quaternion.Lerp(oldRotation, newRotation, t);
-                t += Time.deltaTime;
-                yield return new WaitForEndOfFrame();
-            }
-            
-            _movePointsTransform.localPosition = Vector3.zero;
-            _mainObject.Transform.localPosition = Vector3.zero;
-            _isRotating = false;
-            Messenger.Send(new SetInputActiveState {IsActive = true});
-            yield return new WaitForEndOfFrame();
-        }
+        public void OnMessage(LevelRestarted message) => _currentObjectManipulator.Reset();
 
-        private IEnumerator MoveRoutine(MovePoint point)
-        {
-            float t = RotateConstants.Zero;
-            var oldPosition = _mainObject.Position;
-            var startScale = _mainObject.Transform.localScale;
-            while (t <= 1.1f)
-            {
-                _mainObject.Transform.position = Vector3.Lerp(oldPosition, point.Position, t);
-                _mainObject.Transform.localScale = t <= 5 ? Vector3.Lerp(startScale, startScale * 0.8f, t) : Vector3.Lerp(startScale * 0.8f, startScale, t);
-                t += Time.deltaTime * 3;
-                yield return new WaitForEndOfFrame();
-            }
+        public void OnMessage(SetSwipeInput message) => _currentObjectManipulator = _availableManipulators[Swipe];
 
-            _mainObject.Transform.localScale = startScale;
-            _mainObject.Transform.parent = point.Transform;
-            _mainObject.Transform.localPosition = Vector3.zero;
-            CheckWinCondition();
-        }
+        public void OnMessage(SetDragNDropInput message) => _currentObjectManipulator = _availableManipulators[DragNDrop];
 
-        private IEnumerator ScaleRoutine()
-        {
-            float t = RotateConstants.Zero;
-            var startScale = _mainObject.Transform.localScale;
-            while (t <= 1.1f)
-            {
-                _mainObject.Transform.localScale = t <= 5 ? Vector3.Lerp(startScale, startScale * 0.8f, t) : Vector3.Lerp(startScale * 0.8f, startScale, t);
-                t += Time.deltaTime * 3;
-                yield return new WaitForEndOfFrame();
-            }
+        public void OnMessage(InputStarted message) => _currentObjectManipulator.OnInputStart(message.Position);
 
-            _mainObject.Transform.localScale = startScale;
-        }
+        public void OnMessage(InputHold message) => _currentObjectManipulator.OnInputHold(message.Position);
 
-        private void ResetLevel()
-        {
-            StopCoroutine(RotateRoutine(RotateConstants.Zero));
-            _isRotating = false;
-            Messenger.Send(new SetInputActiveState {IsActive = true});
-            _movePointsTransform.rotation = _defaultFieldRotation;
-            _mainObject.Transform.position = _mainObjectDefaultPosition;
-            AdjustLevelObjectsToMovePoints(_mainObject);
-            AdjustLevelObjectsToMovePoints(_targetObject);
-        }
-
-        #endregion
-
-        #region IMessageListener implementations
-
-        public void OnMessage(LevelRestarted message) => ResetLevel();
-
-        public void OnMessage(SetSwipeInput message) => _stateMachine.TriggerEvent(Swipe);
-
-        public void OnMessage(SetDragNDropInput message) => _stateMachine.TriggerEvent(DragNDrop);
-
-        public void OnMessage(InputStarted message) => _stateMachine.TriggerEvent(InputStarted, new InputEventArgs(message.Position));
-
-        public void OnMessage(InputHold message) => _stateMachine.TriggerEvent(InputHold, new InputEventArgs(message.Position));
-
-        public void OnMessage(InputFinished message) => _stateMachine.TriggerEvent(InputFinished, new InputEventArgs(message.Position));
-
-        #endregion
+        public void OnMessage(InputFinished message) => _currentObjectManipulator.OnInputUp(message.Position);
     }
 }

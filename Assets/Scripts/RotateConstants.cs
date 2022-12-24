@@ -10,5 +10,6 @@ namespace DefaultNamespace
 
         public const int Zero = 0;
         public const float Half = 0.5f;
+        public const int FieldRotationAngle = 90;
     }
 }
